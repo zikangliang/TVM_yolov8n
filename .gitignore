@@ -1,0 +1,70 @@
+# =========================
+# macOS
+# =========================
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# =========================
+# Build outputs
+# =========================
+build/
+*.o
+*.a
+*.so
+*.dylib
+*.out
+
+# Executables
+*.exe
+*_test
+
+# =========================
+# Python
+# =========================
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+.Python
+*.egg-info/
+.eggs/
+*.egg
+.venv/
+venv/
+ENV/
+
+# =========================
+# IDE & Editor
+# =========================
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+.cproject
+.settings/
+
+# =========================
+# Claude/AI assistant
+# =========================
+.claude/
+
+# =========================
+# Generated files (optional - uncomment if needed)
+# =========================
+# op_args_generated.c
+# schedule_generated.c
+
+# =========================
+# Logs
+# =========================
+*.log
+
+# =========================
+# Temporary files
+# =========================
+*.tmp
+*.temp
