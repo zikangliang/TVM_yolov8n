@@ -1,7 +1,6 @@
 /**
  * 自动生成的测试入口文件
  * 模型: yolov8n
- * 输入形状: [1, 3, 640, 640]
  * 输入大小: 1228800 floats (4800.0 KB)
  * 输出大小: 2714985 floats (10605.4 KB)
  */
@@ -24,7 +23,7 @@ struct tvmgen_default_outputs {
 // 模型运行函数声明
 int32_t tvmgen_default_run(struct tvmgen_default_inputs*, struct tvmgen_default_outputs*);
 
-// 工具函数：打印前 N 个元素
+// 打印前 N 个元素
 void print_first_elements(const char* name, float* data, int count) {
     printf("%s (first %d elements):\n", name, count);
     for (int i = 0; i < count; i++) {
@@ -34,17 +33,14 @@ void print_first_elements(const char* name, float* data, int count) {
 
 int main(int argc, char* argv[]) {
     // 解析命令行参数
-    int warmup = 0;
     int iterations = 1;
     for (int i = 1; i < argc; i++) {
-        if (strcmp(argv[i], "--warmup") == 0) {
-            warmup = 1;
-        } else if (strcmp(argv[i], "-n") == 0 && i + 1 < argc) {
+        if (strcmp(argv[i], "-n") == 0 && i + 1 < argc) {
             iterations = atoi(argv[++i]);
         }
     }
 
-    // 分配输入内存
+    // 分配输入内存（全0）
     float* input = (float*)calloc(1228800, sizeof(float));
     if (!input) {
         fprintf(stderr, "Failed to allocate input memory\n");
@@ -59,45 +55,22 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    // 初始化输入数据（随机值）
-    srand(42);  // 固定种子，保证可复现
-    for (int i = 0; i < 1228800; i++) {
-        input[i] = (float)rand() / RAND_MAX;
-    }
-
-    // 初始化输入输出结构体
     struct tvmgen_default_inputs inputs = { .images = input };
     struct tvmgen_default_outputs outputs = { .output = output };
 
     printf("=== yolov8n Test ===\n");
-    printf("Input shape: [1, 3, 640, 640]\n");
     printf("Input size: 1228800 floats (4800.0 KB)\n");
     printf("Output size: 2714985 floats (10605.4 KB)\n");
     printf("Iterations: %d\n", iterations);
 
-    // 预热运行
-    if (warmup) {
-        printf("\nWarmup run...\n");
-        int ret = tvmgen_default_run(&inputs, &outputs);
-        if (ret != 0) {
-            fprintf(stderr, "Warmup failed with error: %d\n", ret);
-            free(input);
-            free(output);
-            return ret;
-        }
-    }
-
-    // 计时运行
     printf("\nRunning inference...\n");
     double total_time = 0.0;
 
     for (int i = 0; i < iterations; i++) {
         clock_t start = clock();
-
         int ret = tvmgen_default_run(&inputs, &outputs);
-
         clock_t end = clock();
-        double elapsed = (double)(end - start) / CLOCKS_PER_SEC * 1000.0;  // ms
+        double elapsed = (double)(end - start) / CLOCKS_PER_SEC * 1000.0;
         total_time += elapsed;
 
         if (ret != 0) {
@@ -106,7 +79,6 @@ int main(int argc, char* argv[]) {
             free(output);
             return ret;
         }
-
         printf("  Iteration %d: %.2f ms\n", i + 1, elapsed);
     }
 
@@ -119,7 +91,6 @@ int main(int argc, char* argv[]) {
     // 打印前20个输出元素
     print_first_elements("Output", output, 20);
 
-    // 释放内存
     free(input);
     free(output);
 

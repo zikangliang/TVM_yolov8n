@@ -1,9 +1,7 @@
 # ============================================================
 # 自动生成的 Makefile
 # 模型: yolov8n
-# 算子数量: 284
-# 常量内存: 12.18 MB
-# 并行支持: 否
+# 算子数量: 94
 # ============================================================
 
 CC ?= gcc
@@ -79,27 +77,7 @@ test: $(TEST_BIN)
 clean:
 	rm -rf $(BUILD_DIR)
 
-# 完全清理（包括生成的 Makefile 和测试文件）
-.PHONY: distclean
-distclean: clean
-	rm -f $(TEST_DIR)/test_main.c Makefile
-
-# 查看算子信息
-.PHONY: info
-info:
-	@echo "Model: yolov8n"
-	@echo "Operators: 284"
-	@echo "Constants Memory: 12.18 MB"
-	@echo "OpenMP Support: No"
-	@echo "Parallel Schedule: Yes"
-
-# 调试编译（不优化）
+# 调试编译
 .PHONY: debug
 debug: CFLAGS = -g -O0 -Wall -fPIC 
-debug: CXXFLAGS = -g -O0 -Wall -fPIC 
 debug: clean all
-
-# 发布编译（去除调试信息）
-.PHONY: release
-release: CFLAGS = -O3 -Wall -fPIC -pthread -DNDEBUG 
-release: $(TEST_BIN)

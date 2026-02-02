@@ -1,1704 +1,1130 @@
-// tvm target: c -keys=cpu 
+// tvm target: c -keys=cpu
 #define TVM_DLL
+#define TVM_EXPORTS
 #include <stdint.h>
 #include <math.h>
 #include <stdbool.h>
 #include <pthread.h>
-// ============ Parallel Runtime Types ============
-#define MAX_INPUTS 6
-#define MAX_OUTPUTS 2
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include <time.h>
 
+// 外部变量声明（来自 lib0.c）
+extern uint8_t global_const_workspace[];
+extern uint8_t global_workspace[];
+
+// ============================================================
+// 自动生成的 Scheduler-Worker 运行时数据结构
+// 算子数量: 94
+// ============================================================
+
+// ============ 类型定义 ============
+#define MAX_INPUTS 8
+#define MAX_OUTPUTS 2
+#define OP_COUNT 94
+
+// 执行配置（预留扩展）
 typedef struct {
+    int device_type;  // 0=CPU, 1=GPU, 2=NPU
+    int priority;     // 调度优先级
+} ExecConfig;
+
+// 前向声明
+struct SchedulableEntity;
+
+// 内核函数指针类型：接收 inputs[], outputs[], cws, ws
+typedef int32_t (*kernel_func_t)(void** inputs, void** outputs, uint8_t* cws, uint8_t* ws);
+
+// 可调度实体 = 函数指针 + 数据参数 + 配置
+typedef struct SchedulableEntity {
+    // 1. 执行入口（内核函数指针）
+    kernel_func_t kernel;
+
+    // 2. 数据参数
     void* inputs[MAX_INPUTS];
     void* outputs[MAX_OUTPUTS];
     int input_count;
     int output_count;
-} op_args_t;
-
-typedef int32_t (*op_func_t)(op_args_t* args, uint8_t* cws, uint8_t* ws);
-
-typedef struct {
-    const int32_t* op_indices;
-    int32_t count;
-} schedule_layer_t;
-// ================================================
-#define OP_COUNT 94
-
-// TVM Generated Function Declarations
-TVM_DLL int32_t tvmgen_default_fused_concatenate(float* p0, float* p0_1, float* p1, float* p2, float* concatenate_ext, uint8_t* global_const_workspace_16_var, uint8_t* global_workspace_17_var);
-TVM_DLL int32_t tvmgen_default_fused_concatenate_1(float* p0, float* p0_1, float* p1, float* p2, float* p3, float* concatenate_ext, uint8_t* global_const_workspace_34_var, uint8_t* global_workspace_35_var);
-TVM_DLL int32_t tvmgen_default_fused_concatenate_10(float* p0, float* p0_1, float* p1, float* p2, float* concatenate_ext, uint8_t* global_const_workspace_162_var, uint8_t* global_workspace_163_var);
-TVM_DLL int32_t tvmgen_default_fused_concatenate_2(float* p0, float* p0_1, float* p1, float* p2, float* p3, float* concatenate_ext, uint8_t* global_const_workspace_52_var, uint8_t* global_workspace_53_var);
-TVM_DLL int32_t tvmgen_default_fused_concatenate_3(float* p0, float* p0_1, float* p1, float* p2, float* concatenate_ext, uint8_t* global_const_workspace_66_var, uint8_t* global_workspace_67_var);
-TVM_DLL int32_t tvmgen_default_fused_concatenate_4(float* p0, float* p1, float* p2, float* p3, float* concatenate_ext, uint8_t* global_const_workspace_78_var, uint8_t* global_workspace_79_var);
-TVM_DLL int32_t tvmgen_default_fused_concatenate_5(float* p0, float* p0_1, float* p1, float* p2, float* concatenate_ext, uint8_t* global_const_workspace_92_var, uint8_t* global_workspace_93_var);
-TVM_DLL int32_t tvmgen_default_fused_concatenate_6(float* p0, float* p0_1, float* p1, float* p2, float* concatenate_ext, uint8_t* global_const_workspace_106_var, uint8_t* global_workspace_107_var);
-TVM_DLL int32_t tvmgen_default_fused_concatenate_7(float* p0, float* p1, float* concatenate_ext, uint8_t* global_const_workspace_124_var, uint8_t* global_workspace_125_var);
-TVM_DLL int32_t tvmgen_default_fused_concatenate_8(float* p0, float* p0_1, float* p1, float* p2, float* concatenate_ext, uint8_t* global_const_workspace_134_var, uint8_t* global_workspace_135_var);
-TVM_DLL int32_t tvmgen_default_fused_concatenate_9(float* p0, float* p1, float* concatenate_ext, uint8_t* global_const_workspace_152_var, uint8_t* global_workspace_153_var);
-TVM_DLL int32_t tvmgen_default_fused_concatenate_layout_transform_reshape_concatenate_layout_transform_reshape__7c5ad37d2665c07f_(float* p0, float* p1, float* p2, float* p3, float* p4, float* p5, float* T_split, float* T_split_1, uint8_t* global_const_workspace_178_var, uint8_t* global_workspace_179_var);
-TVM_DLL int32_t tvmgen_default_fused_layout_transform(float* p0, float* T_layout_trans, uint8_t* global_const_workspace_2_var, uint8_t* global_workspace_3_var);
-TVM_DLL int32_t tvmgen_default_fused_layout_transform_image_resize2d_layout_transform_concatenate_layout_transf_1bf4794317454c42_(float* p0, float* p1, float* T_layout_trans, uint8_t* global_const_workspace_82_var, uint8_t* global_workspace_83_var);
-TVM_DLL int32_t tvmgen_default_fused_layout_transform_image_resize2d_layout_transform_concatenate_layout_transf_1bf4794317454c42__1(float* p0, float* p1, float* T_layout_trans, uint8_t* global_const_workspace_96_var, uint8_t* global_workspace_97_var);
-TVM_DLL int32_t tvmgen_default_fused_layout_transform_reshape_strided_slice_subtract_strided_slice_add_add_divi_e52109f6a309057f_(float* p0, float* p1, float* p1_1, float* concatenate_ext, uint8_t* global_const_workspace_188_var, uint8_t* global_workspace_189_var);
-TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc(float* p0, float* conv2d_NCHWc, uint8_t* global_const_workspace_186_var, uint8_t* global_workspace_187_var);
-TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add(float* p0, float* T_add, uint8_t* global_const_workspace_114_var, uint8_t* global_workspace_115_var);
-TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_1(float* p0, float* T_add, uint8_t* global_const_workspace_120_var, uint8_t* global_workspace_121_var);
-TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_2(float* p0, float* T_add, uint8_t* global_const_workspace_142_var, uint8_t* global_workspace_143_var);
-TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_3(float* p0, float* T_add, uint8_t* global_const_workspace_148_var, uint8_t* global_workspace_149_var);
-TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_4(float* p0, float* T_add, uint8_t* global_const_workspace_170_var, uint8_t* global_workspace_171_var);
-TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_5(float* p0, float* T_add, uint8_t* global_const_workspace_176_var, uint8_t* global_workspace_177_var);
-TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply(float* p0, float* T_multiply, uint8_t* global_const_workspace_4_var, uint8_t* global_workspace_5_var);
-TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_1(float* p0, float* T_multiply, uint8_t* global_const_workspace_6_var, uint8_t* global_workspace_7_var);
-TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_10(float* p0, float* T_multiply, uint8_t* global_const_workspace_38_var, uint8_t* global_workspace_39_var);
-TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_11(float* p0, float* T_multiply, uint8_t* global_const_workspace_40_var, uint8_t* global_workspace_41_var);
-TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_12(float* p0, float* T_multiply, uint8_t* global_const_workspace_44_var, uint8_t* global_workspace_45_var);
-TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_13(float* p0, float* T_multiply, uint8_t* global_const_workspace_48_var, uint8_t* global_workspace_49_var);
-TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_14(float* p0, float* T_multiply, uint8_t* global_const_workspace_54_var, uint8_t* global_workspace_55_var);
-TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_15(float* p0, float* T_multiply, uint8_t* global_const_workspace_56_var, uint8_t* global_workspace_57_var);
-TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_16(float* p0, float* T_multiply, uint8_t* global_const_workspace_58_var, uint8_t* global_workspace_59_var);
-TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_17(float* p0, float* T_multiply, uint8_t* global_const_workspace_62_var, uint8_t* global_workspace_63_var);
-TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_18(float* p0, float* T_multiply, uint8_t* global_const_workspace_68_var, uint8_t* global_workspace_69_var);
-TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_19(float* p0, float* T_multiply, uint8_t* global_const_workspace_70_var, uint8_t* global_workspace_71_var);
-TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_2(float* p0, float* T_multiply, uint8_t* global_const_workspace_8_var, uint8_t* global_workspace_9_var);
-TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_20(float* p0, float* T_multiply, uint8_t* global_const_workspace_80_var, uint8_t* global_workspace_81_var);
-TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_21(float* p0, float* T_multiply, uint8_t* global_const_workspace_84_var, uint8_t* global_workspace_85_var);
-TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_22(float* p0, float* T_multiply, uint8_t* global_const_workspace_88_var, uint8_t* global_workspace_89_var);
-TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_23(float* p0, float* T_multiply, uint8_t* global_const_workspace_90_var, uint8_t* global_workspace_91_var);
-TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_24(float* p0, float* T_multiply, uint8_t* global_const_workspace_94_var, uint8_t* global_workspace_95_var);
-TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_25(float* p0, float* T_multiply, uint8_t* global_const_workspace_98_var, uint8_t* global_workspace_99_var);
-TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_26(float* p0, float* T_multiply, uint8_t* global_const_workspace_102_var, uint8_t* global_workspace_103_var);
-TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_27(float* p0, float* T_multiply, uint8_t* global_const_workspace_104_var, uint8_t* global_workspace_105_var);
-TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_28(float* p0, float* T_multiply, uint8_t* global_const_workspace_108_var, uint8_t* global_workspace_109_var);
-TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_29(float* p0, float* T_multiply, uint8_t* global_const_workspace_110_var, uint8_t* global_workspace_111_var);
-TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_3(float* p0, float* T_multiply, uint8_t* global_const_workspace_12_var, uint8_t* global_workspace_13_var);
-TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_30(float* p0, float* T_multiply, uint8_t* global_const_workspace_112_var, uint8_t* global_workspace_113_var);
-TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_31(float* p0, float* T_multiply, uint8_t* global_const_workspace_116_var, uint8_t* global_workspace_117_var);
-TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_32(float* p0, float* T_multiply, uint8_t* global_const_workspace_118_var, uint8_t* global_workspace_119_var);
-TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_33(float* p0, float* T_multiply, uint8_t* global_const_workspace_122_var, uint8_t* global_workspace_123_var);
-TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_34(float* p0, float* T_multiply, uint8_t* global_const_workspace_126_var, uint8_t* global_workspace_127_var);
-TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_35(float* p0, float* T_multiply, uint8_t* global_const_workspace_130_var, uint8_t* global_workspace_131_var);
-TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_36(float* p0, float* T_multiply, uint8_t* global_const_workspace_132_var, uint8_t* global_workspace_133_var);
-TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_37(float* p0, float* T_multiply, uint8_t* global_const_workspace_136_var, uint8_t* global_workspace_137_var);
-TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_38(float* p0, float* T_multiply, uint8_t* global_const_workspace_138_var, uint8_t* global_workspace_139_var);
-TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_39(float* p0, float* T_multiply, uint8_t* global_const_workspace_140_var, uint8_t* global_workspace_141_var);
-TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_4(float* p0, float* T_multiply, uint8_t* global_const_workspace_18_var, uint8_t* global_workspace_19_var);
-TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_40(float* p0, float* T_multiply, uint8_t* global_const_workspace_144_var, uint8_t* global_workspace_145_var);
-TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_41(float* p0, float* T_multiply, uint8_t* global_const_workspace_146_var, uint8_t* global_workspace_147_var);
-TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_42(float* p0, float* T_multiply, uint8_t* global_const_workspace_150_var, uint8_t* global_workspace_151_var);
-TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_43(float* p0, float* T_multiply, uint8_t* global_const_workspace_154_var, uint8_t* global_workspace_155_var);
-TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_44(float* p0, float* T_multiply, uint8_t* global_const_workspace_158_var, uint8_t* global_workspace_159_var);
-TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_45(float* p0, float* T_multiply, uint8_t* global_const_workspace_160_var, uint8_t* global_workspace_161_var);
-TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_46(float* p0, float* T_multiply, uint8_t* global_const_workspace_164_var, uint8_t* global_workspace_165_var);
-TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_47(float* p0, float* T_multiply, uint8_t* global_const_workspace_166_var, uint8_t* global_workspace_167_var);
-TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_48(float* p0, float* T_multiply, uint8_t* global_const_workspace_168_var, uint8_t* global_workspace_169_var);
-TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_49(float* p0, float* T_multiply, uint8_t* global_const_workspace_172_var, uint8_t* global_workspace_173_var);
-TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_5(float* p0, float* T_multiply, uint8_t* global_const_workspace_20_var, uint8_t* global_workspace_21_var);
-TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_50(float* p0, float* T_multiply, uint8_t* global_const_workspace_174_var, uint8_t* global_workspace_175_var);
-TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_6(float* p0, float* T_multiply, uint8_t* global_const_workspace_22_var, uint8_t* global_workspace_23_var);
-TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_7(float* p0, float* T_multiply, uint8_t* global_const_workspace_26_var, uint8_t* global_workspace_27_var);
-TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_8(float* p0, float* T_multiply, uint8_t* global_const_workspace_30_var, uint8_t* global_workspace_31_var);
-TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_9(float* p0, float* T_multiply, uint8_t* global_const_workspace_36_var, uint8_t* global_workspace_37_var);
-TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_add(float* p0, float* p1, float* T_add, uint8_t* global_const_workspace_14_var, uint8_t* global_workspace_15_var);
-TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_add_1(float* p0, float* p1, float* T_add, uint8_t* global_const_workspace_28_var, uint8_t* global_workspace_29_var);
-TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_add_2(float* p0, float* p1, float* T_add, uint8_t* global_const_workspace_32_var, uint8_t* global_workspace_33_var);
-TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_add_3(float* p0, float* p1, float* T_add, uint8_t* global_const_workspace_46_var, uint8_t* global_workspace_47_var);
-TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_add_4(float* p0, float* p1, float* T_add, uint8_t* global_const_workspace_50_var, uint8_t* global_workspace_51_var);
-TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_add_5(float* p0, float* p1, float* T_add, uint8_t* global_const_workspace_64_var, uint8_t* global_workspace_65_var);
-TVM_DLL int32_t tvmgen_default_fused_nn_max_pool2d(float* p0, float* pool_max, uint8_t* global_const_workspace_72_var, uint8_t* global_workspace_73_var);
-TVM_DLL int32_t tvmgen_default_fused_nn_max_pool2d_1(float* p0, float* pool_max, uint8_t* global_const_workspace_74_var, uint8_t* global_workspace_75_var);
-TVM_DLL int32_t tvmgen_default_fused_nn_max_pool2d_2(float* p0, float* pool_max, uint8_t* global_const_workspace_76_var, uint8_t* global_workspace_77_var);
-TVM_DLL int32_t tvmgen_default_fused_nn_softmax(float* p0, float* T_softmax_norm, uint8_t* global_const_workspace_182_var, uint8_t* global_workspace_183_var);
-TVM_DLL int32_t tvmgen_default_fused_reshape_transpose(float* p0, float* p0_1, float* T_transpose, uint8_t* global_const_workspace_180_var, uint8_t* global_workspace_181_var);
-TVM_DLL int32_t tvmgen_default_fused_split(float* p0, float* T_split, float* T_split_1, uint8_t* global_const_workspace_10_var, uint8_t* global_workspace_11_var);
-TVM_DLL int32_t tvmgen_default_fused_split_1(float* p0, float* T_split, float* T_split_1, uint8_t* global_const_workspace_24_var, uint8_t* global_workspace_25_var);
-TVM_DLL int32_t tvmgen_default_fused_split_2(float* p0, float* T_split, float* T_split_1, uint8_t* global_const_workspace_42_var, uint8_t* global_workspace_43_var);
-TVM_DLL int32_t tvmgen_default_fused_split_3(float* p0, float* T_split, float* T_split_1, uint8_t* global_const_workspace_60_var, uint8_t* global_workspace_61_var);
-TVM_DLL int32_t tvmgen_default_fused_split_4(float* p0, float* T_split, float* T_split_1, uint8_t* global_const_workspace_86_var, uint8_t* global_workspace_87_var);
-TVM_DLL int32_t tvmgen_default_fused_split_5(float* p0, float* T_split, float* T_split_1, uint8_t* global_const_workspace_100_var, uint8_t* global_workspace_101_var);
-TVM_DLL int32_t tvmgen_default_fused_split_6(float* p0, float* T_split, float* T_split_1, uint8_t* global_const_workspace_128_var, uint8_t* global_workspace_129_var);
-TVM_DLL int32_t tvmgen_default_fused_split_7(float* p0, float* T_split, float* T_split_1, uint8_t* global_const_workspace_156_var, uint8_t* global_workspace_157_var);
-TVM_DLL int32_t tvmgen_default_fused_transpose_layout_transform(float* p0, float* T_layout_trans, uint8_t* global_const_workspace_184_var, uint8_t* global_workspace_185_var);
 
-/**
- * 自动生成的算子静态化代码
- * 算子数量: 94
- * 最大输入数: 6
- * 最大输出数: 2
- */
+    // 3. 执行配置
+    ExecConfig config;
+
+    // 4. 标识
+    int id;
+} SchedulableEntity;
+
+// ============ TVM 算子函数声明 ============
+TVM_DLL int32_t tvmgen_default_fused_concatenate();
+TVM_DLL int32_t tvmgen_default_fused_concatenate_1();
+TVM_DLL int32_t tvmgen_default_fused_concatenate_10();
+TVM_DLL int32_t tvmgen_default_fused_concatenate_2();
+TVM_DLL int32_t tvmgen_default_fused_concatenate_3();
+TVM_DLL int32_t tvmgen_default_fused_concatenate_4();
+TVM_DLL int32_t tvmgen_default_fused_concatenate_5();
+TVM_DLL int32_t tvmgen_default_fused_concatenate_6();
+TVM_DLL int32_t tvmgen_default_fused_concatenate_7();
+TVM_DLL int32_t tvmgen_default_fused_concatenate_8();
+TVM_DLL int32_t tvmgen_default_fused_concatenate_9();
+TVM_DLL int32_t tvmgen_default_fused_concatenate_layout_transform_reshape_concatenate_layout_transform_reshape__7c5ad37d2665c07f_();
+TVM_DLL int32_t tvmgen_default_fused_layout_transform();
+TVM_DLL int32_t tvmgen_default_fused_layout_transform_image_resize2d_layout_transform_concatenate_layout_transf_1bf4794317454c42_();
+TVM_DLL int32_t tvmgen_default_fused_layout_transform_image_resize2d_layout_transform_concatenate_layout_transf_1bf4794317454c42__1();
+TVM_DLL int32_t tvmgen_default_fused_layout_transform_reshape_strided_slice_subtract_strided_slice_add_add_divi_e52109f6a309057f_();
+TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc();
+TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add();
+TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_1();
+TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_2();
+TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_3();
+TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_4();
+TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_5();
+TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply();
+TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_1();
+TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_10();
+TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_11();
+TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_12();
+TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_13();
+TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_14();
+TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_15();
+TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_16();
+TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_17();
+TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_18();
+TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_19();
+TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_2();
+TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_20();
+TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_21();
+TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_22();
+TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_23();
+TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_24();
+TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_25();
+TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_26();
+TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_27();
+TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_28();
+TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_29();
+TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_3();
+TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_30();
+TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_31();
+TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_32();
+TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_33();
+TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_34();
+TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_35();
+TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_36();
+TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_37();
+TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_38();
+TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_39();
+TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_4();
+TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_40();
+TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_41();
+TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_42();
+TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_43();
+TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_44();
+TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_45();
+TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_46();
+TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_47();
+TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_48();
+TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_49();
+TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_5();
+TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_50();
+TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_6();
+TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_7();
+TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_8();
+TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_9();
+TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_add();
+TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_add_1();
+TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_add_2();
+TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_add_3();
+TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_add_4();
+TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_add_5();
+TVM_DLL int32_t tvmgen_default_fused_nn_max_pool2d();
+TVM_DLL int32_t tvmgen_default_fused_nn_max_pool2d_1();
+TVM_DLL int32_t tvmgen_default_fused_nn_max_pool2d_2();
+TVM_DLL int32_t tvmgen_default_fused_nn_softmax();
+TVM_DLL int32_t tvmgen_default_fused_reshape_transpose();
+TVM_DLL int32_t tvmgen_default_fused_split();
+TVM_DLL int32_t tvmgen_default_fused_split_1();
+TVM_DLL int32_t tvmgen_default_fused_split_2();
+TVM_DLL int32_t tvmgen_default_fused_split_3();
+TVM_DLL int32_t tvmgen_default_fused_split_4();
+TVM_DLL int32_t tvmgen_default_fused_split_5();
+TVM_DLL int32_t tvmgen_default_fused_split_6();
+TVM_DLL int32_t tvmgen_default_fused_split_7();
+TVM_DLL int32_t tvmgen_default_fused_transpose_layout_transform();
 
-// Wrapped operator adapters for unified call signature.
+// ============ 包装函数 ============
+// 签名: (void** inputs, void** outputs, uint8_t* cws, uint8_t* ws)
 
-static inline int32_t wrapped_tvmgen_default_fused_concatenate(op_args_t *args, uint8_t *cws, uint8_t *ws) {
-  return tvmgen_default_fused_concatenate(args->inputs[0], args->inputs[1], args->inputs[2], args->inputs[3], args->outputs[0], cws, ws);
+static inline int32_t wrapped_tvmgen_default_fused_concatenate(void** inputs, void** outputs, uint8_t* cws, uint8_t* ws) {
+    return tvmgen_default_fused_concatenate(inputs[0], inputs[1], inputs[2], inputs[3], outputs[0], cws, ws);
 }
 
-static inline int32_t wrapped_tvmgen_default_fused_concatenate_1(op_args_t *args, uint8_t *cws, uint8_t *ws) {
-  return tvmgen_default_fused_concatenate_1(args->inputs[0], args->inputs[1], args->inputs[2], args->inputs[3], args->inputs[4], args->outputs[0], cws, ws);
+static inline int32_t wrapped_tvmgen_default_fused_concatenate_1(void** inputs, void** outputs, uint8_t* cws, uint8_t* ws) {
+    return tvmgen_default_fused_concatenate_1(inputs[0], inputs[1], inputs[2], inputs[3], inputs[4], outputs[0], cws, ws);
 }
 
-static inline int32_t wrapped_tvmgen_default_fused_concatenate_10(op_args_t *args, uint8_t *cws, uint8_t *ws) {
-  return tvmgen_default_fused_concatenate_10(args->inputs[0], args->inputs[1], args->inputs[2], args->inputs[3], args->outputs[0], cws, ws);
+static inline int32_t wrapped_tvmgen_default_fused_concatenate_10(void** inputs, void** outputs, uint8_t* cws, uint8_t* ws) {
+    return tvmgen_default_fused_concatenate_10(inputs[0], inputs[1], inputs[2], inputs[3], outputs[0], cws, ws);
 }
 
-static inline int32_t wrapped_tvmgen_default_fused_concatenate_2(op_args_t *args, uint8_t *cws, uint8_t *ws) {
-  return tvmgen_default_fused_concatenate_2(args->inputs[0], args->inputs[1], args->inputs[2], args->inputs[3], args->inputs[4], args->outputs[0], cws, ws);
+static inline int32_t wrapped_tvmgen_default_fused_concatenate_2(void** inputs, void** outputs, uint8_t* cws, uint8_t* ws) {
+    return tvmgen_default_fused_concatenate_2(inputs[0], inputs[1], inputs[2], inputs[3], inputs[4], outputs[0], cws, ws);
 }
 
-static inline int32_t wrapped_tvmgen_default_fused_concatenate_3(op_args_t *args, uint8_t *cws, uint8_t *ws) {
-  return tvmgen_default_fused_concatenate_3(args->inputs[0], args->inputs[1], args->inputs[2], args->inputs[3], args->outputs[0], cws, ws);
+static inline int32_t wrapped_tvmgen_default_fused_concatenate_3(void** inputs, void** outputs, uint8_t* cws, uint8_t* ws) {
+    return tvmgen_default_fused_concatenate_3(inputs[0], inputs[1], inputs[2], inputs[3], outputs[0], cws, ws);
 }
 
-static inline int32_t wrapped_tvmgen_default_fused_concatenate_4(op_args_t *args, uint8_t *cws, uint8_t *ws) {
-  return tvmgen_default_fused_concatenate_4(args->inputs[0], args->inputs[1], args->inputs[2], args->inputs[3], args->outputs[0], cws, ws);
+static inline int32_t wrapped_tvmgen_default_fused_concatenate_4(void** inputs, void** outputs, uint8_t* cws, uint8_t* ws) {
+    return tvmgen_default_fused_concatenate_4(inputs[0], inputs[1], inputs[2], inputs[3], outputs[0], cws, ws);
 }
 
-static inline int32_t wrapped_tvmgen_default_fused_concatenate_5(op_args_t *args, uint8_t *cws, uint8_t *ws) {
-  return tvmgen_default_fused_concatenate_5(args->inputs[0], args->inputs[1], args->inputs[2], args->inputs[3], args->outputs[0], cws, ws);
+static inline int32_t wrapped_tvmgen_default_fused_concatenate_5(void** inputs, void** outputs, uint8_t* cws, uint8_t* ws) {
+    return tvmgen_default_fused_concatenate_5(inputs[0], inputs[1], inputs[2], inputs[3], outputs[0], cws, ws);
 }
 
-static inline int32_t wrapped_tvmgen_default_fused_concatenate_6(op_args_t *args, uint8_t *cws, uint8_t *ws) {
-  return tvmgen_default_fused_concatenate_6(args->inputs[0], args->inputs[1], args->inputs[2], args->inputs[3], args->outputs[0], cws, ws);
+static inline int32_t wrapped_tvmgen_default_fused_concatenate_6(void** inputs, void** outputs, uint8_t* cws, uint8_t* ws) {
+    return tvmgen_default_fused_concatenate_6(inputs[0], inputs[1], inputs[2], inputs[3], outputs[0], cws, ws);
 }
 
-static inline int32_t wrapped_tvmgen_default_fused_concatenate_7(op_args_t *args, uint8_t *cws, uint8_t *ws) {
-  return tvmgen_default_fused_concatenate_7(args->inputs[0], args->inputs[1], args->outputs[0], cws, ws);
+static inline int32_t wrapped_tvmgen_default_fused_concatenate_7(void** inputs, void** outputs, uint8_t* cws, uint8_t* ws) {
+    return tvmgen_default_fused_concatenate_7(inputs[0], inputs[1], outputs[0], cws, ws);
 }
 
-static inline int32_t wrapped_tvmgen_default_fused_concatenate_8(op_args_t *args, uint8_t *cws, uint8_t *ws) {
-  return tvmgen_default_fused_concatenate_8(args->inputs[0], args->inputs[1], args->inputs[2], args->inputs[3], args->outputs[0], cws, ws);
+static inline int32_t wrapped_tvmgen_default_fused_concatenate_8(void** inputs, void** outputs, uint8_t* cws, uint8_t* ws) {
+    return tvmgen_default_fused_concatenate_8(inputs[0], inputs[1], inputs[2], inputs[3], outputs[0], cws, ws);
 }
 
-static inline int32_t wrapped_tvmgen_default_fused_concatenate_9(op_args_t *args, uint8_t *cws, uint8_t *ws) {
-  return tvmgen_default_fused_concatenate_9(args->inputs[0], args->inputs[1], args->outputs[0], cws, ws);
+static inline int32_t wrapped_tvmgen_default_fused_concatenate_9(void** inputs, void** outputs, uint8_t* cws, uint8_t* ws) {
+    return tvmgen_default_fused_concatenate_9(inputs[0], inputs[1], outputs[0], cws, ws);
 }
 
-static inline int32_t wrapped_tvmgen_default_fused_concatenate_layout_transform_reshape_concatenate_layout_transform_reshape__7c5ad37d2665c07f_(op_args_t *args, uint8_t *cws, uint8_t *ws) {
-  return tvmgen_default_fused_concatenate_layout_transform_reshape_concatenate_layout_transform_reshape__7c5ad37d2665c07f_(args->inputs[0], args->inputs[1], args->inputs[2], args->inputs[3], args->inputs[4], args->inputs[5], args->outputs[0], args->outputs[1], cws, ws);
+static inline int32_t wrapped_tvmgen_default_fused_concatenate_layout_transform_reshape_concatenate_layout_transform_reshape__7c5ad37d2665c07f_(void** inputs, void** outputs, uint8_t* cws, uint8_t* ws) {
+    return tvmgen_default_fused_concatenate_layout_transform_reshape_concatenate_layout_transform_reshape__7c5ad37d2665c07f_(inputs[0], inputs[1], inputs[2], inputs[3], inputs[4], inputs[5], outputs[0], outputs[1], cws, ws);
 }
 
-static inline int32_t wrapped_tvmgen_default_fused_layout_transform(op_args_t *args, uint8_t *cws, uint8_t *ws) {
-  return tvmgen_default_fused_layout_transform(args->inputs[0], args->outputs[0], cws, ws);
+static inline int32_t wrapped_tvmgen_default_fused_layout_transform(void** inputs, void** outputs, uint8_t* cws, uint8_t* ws) {
+    return tvmgen_default_fused_layout_transform(inputs[0], outputs[0], cws, ws);
 }
 
-static inline int32_t wrapped_tvmgen_default_fused_layout_transform_image_resize2d_layout_transform_concatenate_layout_transf_1bf4794317454c42_(op_args_t *args, uint8_t *cws, uint8_t *ws) {
-  return tvmgen_default_fused_layout_transform_image_resize2d_layout_transform_concatenate_layout_transf_1bf4794317454c42_(args->inputs[0], args->inputs[1], args->outputs[0], cws, ws);
+static inline int32_t wrapped_tvmgen_default_fused_layout_transform_image_resize2d_layout_transform_concatenate_layout_transf_1bf4794317454c42_(void** inputs, void** outputs, uint8_t* cws, uint8_t* ws) {
+    return tvmgen_default_fused_layout_transform_image_resize2d_layout_transform_concatenate_layout_transf_1bf4794317454c42_(inputs[0], inputs[1], outputs[0], cws, ws);
 }
 
-static inline int32_t wrapped_tvmgen_default_fused_layout_transform_image_resize2d_layout_transform_concatenate_layout_transf_1bf4794317454c42__1(op_args_t *args, uint8_t *cws, uint8_t *ws) {
-  return tvmgen_default_fused_layout_transform_image_resize2d_layout_transform_concatenate_layout_transf_1bf4794317454c42__1(args->inputs[0], args->inputs[1], args->outputs[0], cws, ws);
+static inline int32_t wrapped_tvmgen_default_fused_layout_transform_image_resize2d_layout_transform_concatenate_layout_transf_1bf4794317454c42__1(void** inputs, void** outputs, uint8_t* cws, uint8_t* ws) {
+    return tvmgen_default_fused_layout_transform_image_resize2d_layout_transform_concatenate_layout_transf_1bf4794317454c42__1(inputs[0], inputs[1], outputs[0], cws, ws);
 }
 
-static inline int32_t wrapped_tvmgen_default_fused_layout_transform_reshape_strided_slice_subtract_strided_slice_add_add_divi_e52109f6a309057f_(op_args_t *args, uint8_t *cws, uint8_t *ws) {
-  return tvmgen_default_fused_layout_transform_reshape_strided_slice_subtract_strided_slice_add_add_divi_e52109f6a309057f_(args->inputs[0], args->inputs[1], args->inputs[2], args->outputs[0], cws, ws);
+static inline int32_t wrapped_tvmgen_default_fused_layout_transform_reshape_strided_slice_subtract_strided_slice_add_add_divi_e52109f6a309057f_(void** inputs, void** outputs, uint8_t* cws, uint8_t* ws) {
+    return tvmgen_default_fused_layout_transform_reshape_strided_slice_subtract_strided_slice_add_add_divi_e52109f6a309057f_(inputs[0], inputs[1], inputs[2], outputs[0], cws, ws);
 }
 
-static inline int32_t wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc(op_args_t *args, uint8_t *cws, uint8_t *ws) {
-  return tvmgen_default_fused_nn_contrib_conv2d_NCHWc(args->inputs[0], args->outputs[0], cws, ws);
+static inline int32_t wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc(void** inputs, void** outputs, uint8_t* cws, uint8_t* ws) {
+    return tvmgen_default_fused_nn_contrib_conv2d_NCHWc(inputs[0], outputs[0], cws, ws);
 }
 
-static inline int32_t wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add(op_args_t *args, uint8_t *cws, uint8_t *ws) {
-  return tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add(args->inputs[0], args->outputs[0], cws, ws);
+static inline int32_t wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add(void** inputs, void** outputs, uint8_t* cws, uint8_t* ws) {
+    return tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add(inputs[0], outputs[0], cws, ws);
 }
 
-static inline int32_t wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_1(op_args_t *args, uint8_t *cws, uint8_t *ws) {
-  return tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_1(args->inputs[0], args->outputs[0], cws, ws);
+static inline int32_t wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_1(void** inputs, void** outputs, uint8_t* cws, uint8_t* ws) {
+    return tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_1(inputs[0], outputs[0], cws, ws);
 }
 
-static inline int32_t wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_2(op_args_t *args, uint8_t *cws, uint8_t *ws) {
-  return tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_2(args->inputs[0], args->outputs[0], cws, ws);
+static inline int32_t wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_2(void** inputs, void** outputs, uint8_t* cws, uint8_t* ws) {
+    return tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_2(inputs[0], outputs[0], cws, ws);
 }
 
-static inline int32_t wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_3(op_args_t *args, uint8_t *cws, uint8_t *ws) {
-  return tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_3(args->inputs[0], args->outputs[0], cws, ws);
+static inline int32_t wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_3(void** inputs, void** outputs, uint8_t* cws, uint8_t* ws) {
+    return tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_3(inputs[0], outputs[0], cws, ws);
 }
 
-static inline int32_t wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_4(op_args_t *args, uint8_t *cws, uint8_t *ws) {
-  return tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_4(args->inputs[0], args->outputs[0], cws, ws);
+static inline int32_t wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_4(void** inputs, void** outputs, uint8_t* cws, uint8_t* ws) {
+    return tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_4(inputs[0], outputs[0], cws, ws);
 }
 
-static inline int32_t wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_5(op_args_t *args, uint8_t *cws, uint8_t *ws) {
-  return tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_5(args->inputs[0], args->outputs[0], cws, ws);
+static inline int32_t wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_5(void** inputs, void** outputs, uint8_t* cws, uint8_t* ws) {
+    return tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_5(inputs[0], outputs[0], cws, ws);
 }
 
-static inline int32_t wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply(op_args_t *args, uint8_t *cws, uint8_t *ws) {
-  return tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply(args->inputs[0], args->outputs[0], cws, ws);
+static inline int32_t wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply(void** inputs, void** outputs, uint8_t* cws, uint8_t* ws) {
+    return tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply(inputs[0], outputs[0], cws, ws);
 }
 
-static inline int32_t wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_1(op_args_t *args, uint8_t *cws, uint8_t *ws) {
-  return tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_1(args->inputs[0], args->outputs[0], cws, ws);
+static inline int32_t wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_1(void** inputs, void** outputs, uint8_t* cws, uint8_t* ws) {
+    return tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_1(inputs[0], outputs[0], cws, ws);
 }
 
-static inline int32_t wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_10(op_args_t *args, uint8_t *cws, uint8_t *ws) {
-  return tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_10(args->inputs[0], args->outputs[0], cws, ws);
+static inline int32_t wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_10(void** inputs, void** outputs, uint8_t* cws, uint8_t* ws) {
+    return tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_10(inputs[0], outputs[0], cws, ws);
 }
 
-static inline int32_t wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_11(op_args_t *args, uint8_t *cws, uint8_t *ws) {
-  return tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_11(args->inputs[0], args->outputs[0], cws, ws);
+static inline int32_t wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_11(void** inputs, void** outputs, uint8_t* cws, uint8_t* ws) {
+    return tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_11(inputs[0], outputs[0], cws, ws);
 }
 
-static inline int32_t wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_12(op_args_t *args, uint8_t *cws, uint8_t *ws) {
-  return tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_12(args->inputs[0], args->outputs[0], cws, ws);
+static inline int32_t wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_12(void** inputs, void** outputs, uint8_t* cws, uint8_t* ws) {
+    return tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_12(inputs[0], outputs[0], cws, ws);
 }
 
-static inline int32_t wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_13(op_args_t *args, uint8_t *cws, uint8_t *ws) {
-  return tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_13(args->inputs[0], args->outputs[0], cws, ws);
+static inline int32_t wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_13(void** inputs, void** outputs, uint8_t* cws, uint8_t* ws) {
+    return tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_13(inputs[0], outputs[0], cws, ws);
 }
 
-static inline int32_t wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_14(op_args_t *args, uint8_t *cws, uint8_t *ws) {
-  return tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_14(args->inputs[0], args->outputs[0], cws, ws);
+static inline int32_t wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_14(void** inputs, void** outputs, uint8_t* cws, uint8_t* ws) {
+    return tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_14(inputs[0], outputs[0], cws, ws);
 }
 
-static inline int32_t wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_15(op_args_t *args, uint8_t *cws, uint8_t *ws) {
-  return tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_15(args->inputs[0], args->outputs[0], cws, ws);
+static inline int32_t wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_15(void** inputs, void** outputs, uint8_t* cws, uint8_t* ws) {
+    return tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_15(inputs[0], outputs[0], cws, ws);
 }
 
-static inline int32_t wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_16(op_args_t *args, uint8_t *cws, uint8_t *ws) {
-  return tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_16(args->inputs[0], args->outputs[0], cws, ws);
+static inline int32_t wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_16(void** inputs, void** outputs, uint8_t* cws, uint8_t* ws) {
+    return tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_16(inputs[0], outputs[0], cws, ws);
 }
 
-static inline int32_t wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_17(op_args_t *args, uint8_t *cws, uint8_t *ws) {
-  return tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_17(args->inputs[0], args->outputs[0], cws, ws);
+static inline int32_t wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_17(void** inputs, void** outputs, uint8_t* cws, uint8_t* ws) {
+    return tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_17(inputs[0], outputs[0], cws, ws);
 }
 
-static inline int32_t wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_18(op_args_t *args, uint8_t *cws, uint8_t *ws) {
-  return tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_18(args->inputs[0], args->outputs[0], cws, ws);
+static inline int32_t wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_18(void** inputs, void** outputs, uint8_t* cws, uint8_t* ws) {
+    return tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_18(inputs[0], outputs[0], cws, ws);
 }
 
-static inline int32_t wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_19(op_args_t *args, uint8_t *cws, uint8_t *ws) {
-  return tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_19(args->inputs[0], args->outputs[0], cws, ws);
+static inline int32_t wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_19(void** inputs, void** outputs, uint8_t* cws, uint8_t* ws) {
+    return tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_19(inputs[0], outputs[0], cws, ws);
 }
 
-static inline int32_t wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_2(op_args_t *args, uint8_t *cws, uint8_t *ws) {
-  return tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_2(args->inputs[0], args->outputs[0], cws, ws);
+static inline int32_t wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_2(void** inputs, void** outputs, uint8_t* cws, uint8_t* ws) {
+    return tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_2(inputs[0], outputs[0], cws, ws);
 }
 
-static inline int32_t wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_20(op_args_t *args, uint8_t *cws, uint8_t *ws) {
-  return tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_20(args->inputs[0], args->outputs[0], cws, ws);
+static inline int32_t wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_20(void** inputs, void** outputs, uint8_t* cws, uint8_t* ws) {
+    return tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_20(inputs[0], outputs[0], cws, ws);
 }
 
-static inline int32_t wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_21(op_args_t *args, uint8_t *cws, uint8_t *ws) {
-  return tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_21(args->inputs[0], args->outputs[0], cws, ws);
+static inline int32_t wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_21(void** inputs, void** outputs, uint8_t* cws, uint8_t* ws) {
+    return tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_21(inputs[0], outputs[0], cws, ws);
 }
 
-static inline int32_t wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_22(op_args_t *args, uint8_t *cws, uint8_t *ws) {
-  return tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_22(args->inputs[0], args->outputs[0], cws, ws);
+static inline int32_t wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_22(void** inputs, void** outputs, uint8_t* cws, uint8_t* ws) {
+    return tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_22(inputs[0], outputs[0], cws, ws);
 }
 
-static inline int32_t wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_23(op_args_t *args, uint8_t *cws, uint8_t *ws) {
-  return tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_23(args->inputs[0], args->outputs[0], cws, ws);
+static inline int32_t wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_23(void** inputs, void** outputs, uint8_t* cws, uint8_t* ws) {
+    return tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_23(inputs[0], outputs[0], cws, ws);
 }
 
-static inline int32_t wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_24(op_args_t *args, uint8_t *cws, uint8_t *ws) {
-  return tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_24(args->inputs[0], args->outputs[0], cws, ws);
+static inline int32_t wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_24(void** inputs, void** outputs, uint8_t* cws, uint8_t* ws) {
+    return tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_24(inputs[0], outputs[0], cws, ws);
 }
 
-static inline int32_t wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_25(op_args_t *args, uint8_t *cws, uint8_t *ws) {
-  return tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_25(args->inputs[0], args->outputs[0], cws, ws);
+static inline int32_t wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_25(void** inputs, void** outputs, uint8_t* cws, uint8_t* ws) {
+    return tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_25(inputs[0], outputs[0], cws, ws);
 }
 
-static inline int32_t wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_26(op_args_t *args, uint8_t *cws, uint8_t *ws) {
-  return tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_26(args->inputs[0], args->outputs[0], cws, ws);
+static inline int32_t wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_26(void** inputs, void** outputs, uint8_t* cws, uint8_t* ws) {
+    return tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_26(inputs[0], outputs[0], cws, ws);
 }
 
-static inline int32_t wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_27(op_args_t *args, uint8_t *cws, uint8_t *ws) {
-  return tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_27(args->inputs[0], args->outputs[0], cws, ws);
+static inline int32_t wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_27(void** inputs, void** outputs, uint8_t* cws, uint8_t* ws) {
+    return tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_27(inputs[0], outputs[0], cws, ws);
 }
 
-static inline int32_t wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_28(op_args_t *args, uint8_t *cws, uint8_t *ws) {
-  return tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_28(args->inputs[0], args->outputs[0], cws, ws);
+static inline int32_t wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_28(void** inputs, void** outputs, uint8_t* cws, uint8_t* ws) {
+    return tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_28(inputs[0], outputs[0], cws, ws);
 }
 
-static inline int32_t wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_29(op_args_t *args, uint8_t *cws, uint8_t *ws) {
-  return tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_29(args->inputs[0], args->outputs[0], cws, ws);
+static inline int32_t wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_29(void** inputs, void** outputs, uint8_t* cws, uint8_t* ws) {
+    return tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_29(inputs[0], outputs[0], cws, ws);
 }
 
-static inline int32_t wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_3(op_args_t *args, uint8_t *cws, uint8_t *ws) {
-  return tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_3(args->inputs[0], args->outputs[0], cws, ws);
+static inline int32_t wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_3(void** inputs, void** outputs, uint8_t* cws, uint8_t* ws) {
+    return tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_3(inputs[0], outputs[0], cws, ws);
 }
 
-static inline int32_t wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_30(op_args_t *args, uint8_t *cws, uint8_t *ws) {
-  return tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_30(args->inputs[0], args->outputs[0], cws, ws);
+static inline int32_t wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_30(void** inputs, void** outputs, uint8_t* cws, uint8_t* ws) {
+    return tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_30(inputs[0], outputs[0], cws, ws);
 }
 
-static inline int32_t wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_31(op_args_t *args, uint8_t *cws, uint8_t *ws) {
-  return tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_31(args->inputs[0], args->outputs[0], cws, ws);
+static inline int32_t wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_31(void** inputs, void** outputs, uint8_t* cws, uint8_t* ws) {
+    return tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_31(inputs[0], outputs[0], cws, ws);
 }
 
-static inline int32_t wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_32(op_args_t *args, uint8_t *cws, uint8_t *ws) {
-  return tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_32(args->inputs[0], args->outputs[0], cws, ws);
+static inline int32_t wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_32(void** inputs, void** outputs, uint8_t* cws, uint8_t* ws) {
+    return tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_32(inputs[0], outputs[0], cws, ws);
 }
 
-static inline int32_t wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_33(op_args_t *args, uint8_t *cws, uint8_t *ws) {
-  return tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_33(args->inputs[0], args->outputs[0], cws, ws);
+static inline int32_t wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_33(void** inputs, void** outputs, uint8_t* cws, uint8_t* ws) {
+    return tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_33(inputs[0], outputs[0], cws, ws);
 }
 
-static inline int32_t wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_34(op_args_t *args, uint8_t *cws, uint8_t *ws) {
-  return tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_34(args->inputs[0], args->outputs[0], cws, ws);
+static inline int32_t wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_34(void** inputs, void** outputs, uint8_t* cws, uint8_t* ws) {
+    return tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_34(inputs[0], outputs[0], cws, ws);
 }
 
-static inline int32_t wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_35(op_args_t *args, uint8_t *cws, uint8_t *ws) {
-  return tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_35(args->inputs[0], args->outputs[0], cws, ws);
+static inline int32_t wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_35(void** inputs, void** outputs, uint8_t* cws, uint8_t* ws) {
+    return tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_35(inputs[0], outputs[0], cws, ws);
 }
 
-static inline int32_t wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_36(op_args_t *args, uint8_t *cws, uint8_t *ws) {
-  return tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_36(args->inputs[0], args->outputs[0], cws, ws);
+static inline int32_t wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_36(void** inputs, void** outputs, uint8_t* cws, uint8_t* ws) {
+    return tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_36(inputs[0], outputs[0], cws, ws);
 }
 
-static inline int32_t wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_37(op_args_t *args, uint8_t *cws, uint8_t *ws) {
-  return tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_37(args->inputs[0], args->outputs[0], cws, ws);
+static inline int32_t wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_37(void** inputs, void** outputs, uint8_t* cws, uint8_t* ws) {
+    return tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_37(inputs[0], outputs[0], cws, ws);
 }
 
-static inline int32_t wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_38(op_args_t *args, uint8_t *cws, uint8_t *ws) {
-  return tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_38(args->inputs[0], args->outputs[0], cws, ws);
+static inline int32_t wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_38(void** inputs, void** outputs, uint8_t* cws, uint8_t* ws) {
+    return tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_38(inputs[0], outputs[0], cws, ws);
 }
 
-static inline int32_t wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_39(op_args_t *args, uint8_t *cws, uint8_t *ws) {
-  return tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_39(args->inputs[0], args->outputs[0], cws, ws);
+static inline int32_t wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_39(void** inputs, void** outputs, uint8_t* cws, uint8_t* ws) {
+    return tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_39(inputs[0], outputs[0], cws, ws);
 }
 
-static inline int32_t wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_4(op_args_t *args, uint8_t *cws, uint8_t *ws) {
-  return tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_4(args->inputs[0], args->outputs[0], cws, ws);
+static inline int32_t wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_4(void** inputs, void** outputs, uint8_t* cws, uint8_t* ws) {
+    return tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_4(inputs[0], outputs[0], cws, ws);
 }
 
-static inline int32_t wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_40(op_args_t *args, uint8_t *cws, uint8_t *ws) {
-  return tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_40(args->inputs[0], args->outputs[0], cws, ws);
+static inline int32_t wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_40(void** inputs, void** outputs, uint8_t* cws, uint8_t* ws) {
+    return tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_40(inputs[0], outputs[0], cws, ws);
 }
 
-static inline int32_t wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_41(op_args_t *args, uint8_t *cws, uint8_t *ws) {
-  return tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_41(args->inputs[0], args->outputs[0], cws, ws);
+static inline int32_t wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_41(void** inputs, void** outputs, uint8_t* cws, uint8_t* ws) {
+    return tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_41(inputs[0], outputs[0], cws, ws);
 }
 
-static inline int32_t wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_42(op_args_t *args, uint8_t *cws, uint8_t *ws) {
-  return tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_42(args->inputs[0], args->outputs[0], cws, ws);
+static inline int32_t wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_42(void** inputs, void** outputs, uint8_t* cws, uint8_t* ws) {
+    return tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_42(inputs[0], outputs[0], cws, ws);
 }
 
-static inline int32_t wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_43(op_args_t *args, uint8_t *cws, uint8_t *ws) {
-  return tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_43(args->inputs[0], args->outputs[0], cws, ws);
+static inline int32_t wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_43(void** inputs, void** outputs, uint8_t* cws, uint8_t* ws) {
+    return tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_43(inputs[0], outputs[0], cws, ws);
 }
 
-static inline int32_t wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_44(op_args_t *args, uint8_t *cws, uint8_t *ws) {
-  return tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_44(args->inputs[0], args->outputs[0], cws, ws);
+static inline int32_t wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_44(void** inputs, void** outputs, uint8_t* cws, uint8_t* ws) {
+    return tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_44(inputs[0], outputs[0], cws, ws);
 }
 
-static inline int32_t wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_45(op_args_t *args, uint8_t *cws, uint8_t *ws) {
-  return tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_45(args->inputs[0], args->outputs[0], cws, ws);
+static inline int32_t wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_45(void** inputs, void** outputs, uint8_t* cws, uint8_t* ws) {
+    return tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_45(inputs[0], outputs[0], cws, ws);
 }
 
-static inline int32_t wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_46(op_args_t *args, uint8_t *cws, uint8_t *ws) {
-  return tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_46(args->inputs[0], args->outputs[0], cws, ws);
+static inline int32_t wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_46(void** inputs, void** outputs, uint8_t* cws, uint8_t* ws) {
+    return tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_46(inputs[0], outputs[0], cws, ws);
 }
 
-static inline int32_t wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_47(op_args_t *args, uint8_t *cws, uint8_t *ws) {
-  return tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_47(args->inputs[0], args->outputs[0], cws, ws);
+static inline int32_t wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_47(void** inputs, void** outputs, uint8_t* cws, uint8_t* ws) {
+    return tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_47(inputs[0], outputs[0], cws, ws);
 }
 
-static inline int32_t wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_48(op_args_t *args, uint8_t *cws, uint8_t *ws) {
-  return tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_48(args->inputs[0], args->outputs[0], cws, ws);
+static inline int32_t wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_48(void** inputs, void** outputs, uint8_t* cws, uint8_t* ws) {
+    return tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_48(inputs[0], outputs[0], cws, ws);
 }
 
-static inline int32_t wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_49(op_args_t *args, uint8_t *cws, uint8_t *ws) {
-  return tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_49(args->inputs[0], args->outputs[0], cws, ws);
+static inline int32_t wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_49(void** inputs, void** outputs, uint8_t* cws, uint8_t* ws) {
+    return tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_49(inputs[0], outputs[0], cws, ws);
 }
 
-static inline int32_t wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_5(op_args_t *args, uint8_t *cws, uint8_t *ws) {
-  return tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_5(args->inputs[0], args->outputs[0], cws, ws);
+static inline int32_t wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_5(void** inputs, void** outputs, uint8_t* cws, uint8_t* ws) {
+    return tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_5(inputs[0], outputs[0], cws, ws);
 }
 
-static inline int32_t wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_50(op_args_t *args, uint8_t *cws, uint8_t *ws) {
-  return tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_50(args->inputs[0], args->outputs[0], cws, ws);
+static inline int32_t wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_50(void** inputs, void** outputs, uint8_t* cws, uint8_t* ws) {
+    return tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_50(inputs[0], outputs[0], cws, ws);
 }
 
-static inline int32_t wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_6(op_args_t *args, uint8_t *cws, uint8_t *ws) {
-  return tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_6(args->inputs[0], args->outputs[0], cws, ws);
+static inline int32_t wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_6(void** inputs, void** outputs, uint8_t* cws, uint8_t* ws) {
+    return tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_6(inputs[0], outputs[0], cws, ws);
 }
 
-static inline int32_t wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_7(op_args_t *args, uint8_t *cws, uint8_t *ws) {
-  return tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_7(args->inputs[0], args->outputs[0], cws, ws);
+static inline int32_t wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_7(void** inputs, void** outputs, uint8_t* cws, uint8_t* ws) {
+    return tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_7(inputs[0], outputs[0], cws, ws);
 }
 
-static inline int32_t wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_8(op_args_t *args, uint8_t *cws, uint8_t *ws) {
-  return tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_8(args->inputs[0], args->outputs[0], cws, ws);
+static inline int32_t wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_8(void** inputs, void** outputs, uint8_t* cws, uint8_t* ws) {
+    return tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_8(inputs[0], outputs[0], cws, ws);
 }
 
-static inline int32_t wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_9(op_args_t *args, uint8_t *cws, uint8_t *ws) {
-  return tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_9(args->inputs[0], args->outputs[0], cws, ws);
+static inline int32_t wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_9(void** inputs, void** outputs, uint8_t* cws, uint8_t* ws) {
+    return tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_9(inputs[0], outputs[0], cws, ws);
 }
 
-static inline int32_t wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_add(op_args_t *args, uint8_t *cws, uint8_t *ws) {
-  return tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_add(args->inputs[0], args->inputs[1], args->outputs[0], cws, ws);
+static inline int32_t wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_add(void** inputs, void** outputs, uint8_t* cws, uint8_t* ws) {
+    return tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_add(inputs[0], inputs[1], outputs[0], cws, ws);
 }
 
-static inline int32_t wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_add_1(op_args_t *args, uint8_t *cws, uint8_t *ws) {
-  return tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_add_1(args->inputs[0], args->inputs[1], args->outputs[0], cws, ws);
+static inline int32_t wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_add_1(void** inputs, void** outputs, uint8_t* cws, uint8_t* ws) {
+    return tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_add_1(inputs[0], inputs[1], outputs[0], cws, ws);
 }
 
-static inline int32_t wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_add_2(op_args_t *args, uint8_t *cws, uint8_t *ws) {
-  return tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_add_2(args->inputs[0], args->inputs[1], args->outputs[0], cws, ws);
+static inline int32_t wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_add_2(void** inputs, void** outputs, uint8_t* cws, uint8_t* ws) {
+    return tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_add_2(inputs[0], inputs[1], outputs[0], cws, ws);
 }
 
-static inline int32_t wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_add_3(op_args_t *args, uint8_t *cws, uint8_t *ws) {
-  return tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_add_3(args->inputs[0], args->inputs[1], args->outputs[0], cws, ws);
+static inline int32_t wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_add_3(void** inputs, void** outputs, uint8_t* cws, uint8_t* ws) {
+    return tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_add_3(inputs[0], inputs[1], outputs[0], cws, ws);
 }
 
-static inline int32_t wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_add_4(op_args_t *args, uint8_t *cws, uint8_t *ws) {
-  return tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_add_4(args->inputs[0], args->inputs[1], args->outputs[0], cws, ws);
+static inline int32_t wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_add_4(void** inputs, void** outputs, uint8_t* cws, uint8_t* ws) {
+    return tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_add_4(inputs[0], inputs[1], outputs[0], cws, ws);
 }
 
-static inline int32_t wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_add_5(op_args_t *args, uint8_t *cws, uint8_t *ws) {
-  return tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_add_5(args->inputs[0], args->inputs[1], args->outputs[0], cws, ws);
+static inline int32_t wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_add_5(void** inputs, void** outputs, uint8_t* cws, uint8_t* ws) {
+    return tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_add_5(inputs[0], inputs[1], outputs[0], cws, ws);
 }
 
-static inline int32_t wrapped_tvmgen_default_fused_nn_max_pool2d(op_args_t *args, uint8_t *cws, uint8_t *ws) {
-  return tvmgen_default_fused_nn_max_pool2d(args->inputs[0], args->outputs[0], cws, ws);
+static inline int32_t wrapped_tvmgen_default_fused_nn_max_pool2d(void** inputs, void** outputs, uint8_t* cws, uint8_t* ws) {
+    return tvmgen_default_fused_nn_max_pool2d(inputs[0], outputs[0], cws, ws);
 }
 
-static inline int32_t wrapped_tvmgen_default_fused_nn_max_pool2d_1(op_args_t *args, uint8_t *cws, uint8_t *ws) {
-  return tvmgen_default_fused_nn_max_pool2d_1(args->inputs[0], args->outputs[0], cws, ws);
+static inline int32_t wrapped_tvmgen_default_fused_nn_max_pool2d_1(void** inputs, void** outputs, uint8_t* cws, uint8_t* ws) {
+    return tvmgen_default_fused_nn_max_pool2d_1(inputs[0], outputs[0], cws, ws);
 }
 
-static inline int32_t wrapped_tvmgen_default_fused_nn_max_pool2d_2(op_args_t *args, uint8_t *cws, uint8_t *ws) {
-  return tvmgen_default_fused_nn_max_pool2d_2(args->inputs[0], args->outputs[0], cws, ws);
+static inline int32_t wrapped_tvmgen_default_fused_nn_max_pool2d_2(void** inputs, void** outputs, uint8_t* cws, uint8_t* ws) {
+    return tvmgen_default_fused_nn_max_pool2d_2(inputs[0], outputs[0], cws, ws);
 }
 
-static inline int32_t wrapped_tvmgen_default_fused_nn_softmax(op_args_t *args, uint8_t *cws, uint8_t *ws) {
-  return tvmgen_default_fused_nn_softmax(args->inputs[0], args->outputs[0], cws, ws);
+static inline int32_t wrapped_tvmgen_default_fused_nn_softmax(void** inputs, void** outputs, uint8_t* cws, uint8_t* ws) {
+    return tvmgen_default_fused_nn_softmax(inputs[0], outputs[0], cws, ws);
 }
 
-static inline int32_t wrapped_tvmgen_default_fused_reshape_transpose(op_args_t *args, uint8_t *cws, uint8_t *ws) {
-  return tvmgen_default_fused_reshape_transpose(args->inputs[0], args->inputs[1], args->outputs[0], cws, ws);
+static inline int32_t wrapped_tvmgen_default_fused_reshape_transpose(void** inputs, void** outputs, uint8_t* cws, uint8_t* ws) {
+    return tvmgen_default_fused_reshape_transpose(inputs[0], inputs[1], outputs[0], cws, ws);
 }
 
-static inline int32_t wrapped_tvmgen_default_fused_split(op_args_t *args, uint8_t *cws, uint8_t *ws) {
-  return tvmgen_default_fused_split(args->inputs[0], args->outputs[0], args->outputs[1], cws, ws);
+static inline int32_t wrapped_tvmgen_default_fused_split(void** inputs, void** outputs, uint8_t* cws, uint8_t* ws) {
+    return tvmgen_default_fused_split(inputs[0], outputs[0], outputs[1], cws, ws);
 }
 
-static inline int32_t wrapped_tvmgen_default_fused_split_1(op_args_t *args, uint8_t *cws, uint8_t *ws) {
-  return tvmgen_default_fused_split_1(args->inputs[0], args->outputs[0], args->outputs[1], cws, ws);
+static inline int32_t wrapped_tvmgen_default_fused_split_1(void** inputs, void** outputs, uint8_t* cws, uint8_t* ws) {
+    return tvmgen_default_fused_split_1(inputs[0], outputs[0], outputs[1], cws, ws);
 }
 
-static inline int32_t wrapped_tvmgen_default_fused_split_2(op_args_t *args, uint8_t *cws, uint8_t *ws) {
-  return tvmgen_default_fused_split_2(args->inputs[0], args->outputs[0], args->outputs[1], cws, ws);
+static inline int32_t wrapped_tvmgen_default_fused_split_2(void** inputs, void** outputs, uint8_t* cws, uint8_t* ws) {
+    return tvmgen_default_fused_split_2(inputs[0], outputs[0], outputs[1], cws, ws);
 }
 
-static inline int32_t wrapped_tvmgen_default_fused_split_3(op_args_t *args, uint8_t *cws, uint8_t *ws) {
-  return tvmgen_default_fused_split_3(args->inputs[0], args->outputs[0], args->outputs[1], cws, ws);
+static inline int32_t wrapped_tvmgen_default_fused_split_3(void** inputs, void** outputs, uint8_t* cws, uint8_t* ws) {
+    return tvmgen_default_fused_split_3(inputs[0], outputs[0], outputs[1], cws, ws);
 }
 
-static inline int32_t wrapped_tvmgen_default_fused_split_4(op_args_t *args, uint8_t *cws, uint8_t *ws) {
-  return tvmgen_default_fused_split_4(args->inputs[0], args->outputs[0], args->outputs[1], cws, ws);
+static inline int32_t wrapped_tvmgen_default_fused_split_4(void** inputs, void** outputs, uint8_t* cws, uint8_t* ws) {
+    return tvmgen_default_fused_split_4(inputs[0], outputs[0], outputs[1], cws, ws);
 }
 
-static inline int32_t wrapped_tvmgen_default_fused_split_5(op_args_t *args, uint8_t *cws, uint8_t *ws) {
-  return tvmgen_default_fused_split_5(args->inputs[0], args->outputs[0], args->outputs[1], cws, ws);
+static inline int32_t wrapped_tvmgen_default_fused_split_5(void** inputs, void** outputs, uint8_t* cws, uint8_t* ws) {
+    return tvmgen_default_fused_split_5(inputs[0], outputs[0], outputs[1], cws, ws);
 }
 
-static inline int32_t wrapped_tvmgen_default_fused_split_6(op_args_t *args, uint8_t *cws, uint8_t *ws) {
-  return tvmgen_default_fused_split_6(args->inputs[0], args->outputs[0], args->outputs[1], cws, ws);
+static inline int32_t wrapped_tvmgen_default_fused_split_6(void** inputs, void** outputs, uint8_t* cws, uint8_t* ws) {
+    return tvmgen_default_fused_split_6(inputs[0], outputs[0], outputs[1], cws, ws);
 }
 
-static inline int32_t wrapped_tvmgen_default_fused_split_7(op_args_t *args, uint8_t *cws, uint8_t *ws) {
-  return tvmgen_default_fused_split_7(args->inputs[0], args->outputs[0], args->outputs[1], cws, ws);
+static inline int32_t wrapped_tvmgen_default_fused_split_7(void** inputs, void** outputs, uint8_t* cws, uint8_t* ws) {
+    return tvmgen_default_fused_split_7(inputs[0], outputs[0], outputs[1], cws, ws);
 }
 
-static inline int32_t wrapped_tvmgen_default_fused_transpose_layout_transform(op_args_t *args, uint8_t *cws, uint8_t *ws) {
-  return tvmgen_default_fused_transpose_layout_transform(args->inputs[0], args->outputs[0], cws, ws);
+static inline int32_t wrapped_tvmgen_default_fused_transpose_layout_transform(void** inputs, void** outputs, uint8_t* cws, uint8_t* ws) {
+    return tvmgen_default_fused_transpose_layout_transform(inputs[0], outputs[0], cws, ws);
 }
 
-
-static const op_func_t g_op_call_table[OP_COUNT] = {
-  wrapped_tvmgen_default_fused_concatenate,
-  wrapped_tvmgen_default_fused_concatenate_1,
-  wrapped_tvmgen_default_fused_concatenate_10,
-  wrapped_tvmgen_default_fused_concatenate_2,
-  wrapped_tvmgen_default_fused_concatenate_3,
-  wrapped_tvmgen_default_fused_concatenate_4,
-  wrapped_tvmgen_default_fused_concatenate_5,
-  wrapped_tvmgen_default_fused_concatenate_6,
-  wrapped_tvmgen_default_fused_concatenate_7,
-  wrapped_tvmgen_default_fused_concatenate_8,
-  wrapped_tvmgen_default_fused_concatenate_9,
-  wrapped_tvmgen_default_fused_concatenate_layout_transform_reshape_concatenate_layout_transform_reshape__7c5ad37d2665c07f_,
-  wrapped_tvmgen_default_fused_layout_transform,
-  wrapped_tvmgen_default_fused_layout_transform_image_resize2d_layout_transform_concatenate_layout_transf_1bf4794317454c42_,
-  wrapped_tvmgen_default_fused_layout_transform_image_resize2d_layout_transform_concatenate_layout_transf_1bf4794317454c42__1,
-  wrapped_tvmgen_default_fused_layout_transform_reshape_strided_slice_subtract_strided_slice_add_add_divi_e52109f6a309057f_,
-  wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc,
-  wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add,
-  wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_1,
-  wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_2,
-  wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_3,
-  wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_4,
-  wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_5,
-  wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply,
-  wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_1,
-  wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_10,
-  wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_11,
-  wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_12,
-  wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_13,
-  wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_14,
-  wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_15,
-  wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_16,
-  wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_17,
-  wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_18,
-  wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_19,
-  wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_2,
-  wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_20,
-  wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_21,
-  wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_22,
-  wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_23,
-  wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_24,
-  wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_25,
-  wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_26,
-  wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_27,
-  wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_28,
-  wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_29,
-  wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_3,
-  wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_30,
-  wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_31,
-  wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_32,
-  wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_33,
-  wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_34,
-  wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_35,
-  wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_36,
-  wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_37,
-  wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_38,
-  wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_39,
-  wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_4,
-  wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_40,
-  wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_41,
-  wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_42,
-  wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_43,
-  wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_44,
-  wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_45,
-  wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_46,
-  wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_47,
-  wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_48,
-  wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_49,
-  wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_5,
-  wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_50,
-  wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_6,
-  wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_7,
-  wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_8,
-  wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_9,
-  wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_add,
-  wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_add_1,
-  wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_add_2,
-  wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_add_3,
-  wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_add_4,
-  wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_add_5,
-  wrapped_tvmgen_default_fused_nn_max_pool2d,
-  wrapped_tvmgen_default_fused_nn_max_pool2d_1,
-  wrapped_tvmgen_default_fused_nn_max_pool2d_2,
-  wrapped_tvmgen_default_fused_nn_softmax,
-  wrapped_tvmgen_default_fused_reshape_transpose,
-  wrapped_tvmgen_default_fused_split,
-  wrapped_tvmgen_default_fused_split_1,
-  wrapped_tvmgen_default_fused_split_2,
-  wrapped_tvmgen_default_fused_split_3,
-  wrapped_tvmgen_default_fused_split_4,
-  wrapped_tvmgen_default_fused_split_5,
-  wrapped_tvmgen_default_fused_split_6,
-  wrapped_tvmgen_default_fused_split_7,
-  wrapped_tvmgen_default_fused_transpose_layout_transform,
+// ============ 调试信息 ============
+static const char* const g_op_names[94] __attribute__((unused)) = {
+    "tvmgen_default_fused_layout_transform",
+    "tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply",
+    "tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_1",
+    "tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_2",
+    "tvmgen_default_fused_split",
+    "tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_3",
+    "tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_add",
+    "tvmgen_default_fused_concatenate",
+    "tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_4",
+    "tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_5",
+    "tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_6",
+    "tvmgen_default_fused_split_1",
+    "tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_7",
+    "tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_add_1",
+    "tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_8",
+    "tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_add_2",
+    "tvmgen_default_fused_concatenate_1",
+    "tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_9",
+    "tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_10",
+    "tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_11",
+    "tvmgen_default_fused_split_2",
+    "tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_12",
+    "tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_add_3",
+    "tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_13",
+    "tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_add_4",
+    "tvmgen_default_fused_concatenate_2",
+    "tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_14",
+    "tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_15",
+    "tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_16",
+    "tvmgen_default_fused_split_3",
+    "tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_17",
+    "tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_add_5",
+    "tvmgen_default_fused_concatenate_3",
+    "tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_18",
+    "tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_19",
+    "tvmgen_default_fused_nn_max_pool2d",
+    "tvmgen_default_fused_nn_max_pool2d_1",
+    "tvmgen_default_fused_nn_max_pool2d_2",
+    "tvmgen_default_fused_concatenate_4",
+    "tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_20",
+    "tvmgen_default_fused_layout_transform_image_resize2d_layout_transform_concatenate_layout_transf_1bf4794317454c42_",
+    "tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_21",
+    "tvmgen_default_fused_split_4",
+    "tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_22",
+    "tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_23",
+    "tvmgen_default_fused_concatenate_5",
+    "tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_24",
+    "tvmgen_default_fused_layout_transform_image_resize2d_layout_transform_concatenate_layout_transf_1bf4794317454c42__1",
+    "tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_25",
+    "tvmgen_default_fused_split_5",
+    "tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_26",
+    "tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_27",
+    "tvmgen_default_fused_concatenate_6",
+    "tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_28",
+    "tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_29",
+    "tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_30",
+    "tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add",
+    "tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_31",
+    "tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_32",
+    "tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_1",
+    "tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_33",
+    "tvmgen_default_fused_concatenate_7",
+    "tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_34",
+    "tvmgen_default_fused_split_6",
+    "tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_35",
+    "tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_36",
+    "tvmgen_default_fused_concatenate_8",
+    "tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_37",
+    "tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_38",
+    "tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_39",
+    "tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_2",
+    "tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_40",
+    "tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_41",
+    "tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_3",
+    "tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_42",
+    "tvmgen_default_fused_concatenate_9",
+    "tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_43",
+    "tvmgen_default_fused_split_7",
+    "tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_44",
+    "tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_45",
+    "tvmgen_default_fused_concatenate_10",
+    "tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_46",
+    "tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_47",
+    "tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_48",
+    "tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_4",
+    "tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_49",
+    "tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_50",
+    "tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_5",
+    "tvmgen_default_fused_concatenate_layout_transform_reshape_concatenate_layout_transform_reshape__7c5ad37d2665c07f_",
+    "tvmgen_default_fused_reshape_transpose",
+    "tvmgen_default_fused_nn_softmax",
+    "tvmgen_default_fused_transpose_layout_transform",
+    "tvmgen_default_fused_nn_contrib_conv2d_NCHWc",
+    "tvmgen_default_fused_layout_transform_reshape_strided_slice_subtract_strided_slice_add_add_divi_e52109f6a309057f_",
 };
 
-static const char* const g_op_call_names[94] __attribute__((unused)) = {
-  "tvmgen_default_fused_layout_transform",
-  "tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply",
-  "tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_1",
-  "tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_2",
-  "tvmgen_default_fused_split",
-  "tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_3",
-  "tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_add",
-  "tvmgen_default_fused_concatenate",
-  "tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_4",
-  "tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_5",
-  "tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_6",
-  "tvmgen_default_fused_split_1",
-  "tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_7",
-  "tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_add_1",
-  "tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_8",
-  "tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_add_2",
-  "tvmgen_default_fused_concatenate_1",
-  "tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_9",
-  "tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_10",
-  "tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_11",
-  "tvmgen_default_fused_split_2",
-  "tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_12",
-  "tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_add_3",
-  "tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_13",
-  "tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_add_4",
-  "tvmgen_default_fused_concatenate_2",
-  "tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_14",
-  "tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_15",
-  "tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_16",
-  "tvmgen_default_fused_split_3",
-  "tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_17",
-  "tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_add_5",
-  "tvmgen_default_fused_concatenate_3",
-  "tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_18",
-  "tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_19",
-  "tvmgen_default_fused_nn_max_pool2d",
-  "tvmgen_default_fused_nn_max_pool2d_1",
-  "tvmgen_default_fused_nn_max_pool2d_2",
-  "tvmgen_default_fused_concatenate_4",
-  "tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_20",
-  "tvmgen_default_fused_layout_transform_image_resize2d_layout_transform_concatenate_layout_transf_1bf4794317454c42_",
-  "tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_21",
-  "tvmgen_default_fused_split_4",
-  "tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_22",
-  "tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_23",
-  "tvmgen_default_fused_concatenate_5",
-  "tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_24",
-  "tvmgen_default_fused_layout_transform_image_resize2d_layout_transform_concatenate_layout_transf_1bf4794317454c42__1",
-  "tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_25",
-  "tvmgen_default_fused_split_5",
-  "tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_26",
-  "tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_27",
-  "tvmgen_default_fused_concatenate_6",
-  "tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_28",
-  "tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_29",
-  "tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_30",
-  "tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add",
-  "tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_31",
-  "tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_32",
-  "tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_1",
-  "tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_33",
-  "tvmgen_default_fused_concatenate_7",
-  "tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_34",
-  "tvmgen_default_fused_split_6",
-  "tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_35",
-  "tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_36",
-  "tvmgen_default_fused_concatenate_8",
-  "tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_37",
-  "tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_38",
-  "tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_39",
-  "tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_2",
-  "tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_40",
-  "tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_41",
-  "tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_3",
-  "tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_42",
-  "tvmgen_default_fused_concatenate_9",
-  "tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_43",
-  "tvmgen_default_fused_split_7",
-  "tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_44",
-  "tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_45",
-  "tvmgen_default_fused_concatenate_10",
-  "tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_46",
-  "tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_47",
-  "tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_48",
-  "tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_4",
-  "tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_49",
-  "tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_50",
-  "tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_5",
-  "tvmgen_default_fused_concatenate_layout_transform_reshape_concatenate_layout_transform_reshape__7c5ad37d2665c07f_",
-  "tvmgen_default_fused_reshape_transpose",
-  "tvmgen_default_fused_nn_softmax",
-  "tvmgen_default_fused_transpose_layout_transform",
-  "tvmgen_default_fused_nn_contrib_conv2d_NCHWc",
-  "tvmgen_default_fused_layout_transform_reshape_strided_slice_subtract_strided_slice_add_add_divi_e52109f6a309057f_",
-};
-// 从执行索引到函数表索引的映射 (执行顺序 -> 唯一函数索引)
-static const int32_t g_op_func_idx[94] = {
-   12,  23,  24,  35,  85,  46,  74,   0,  57,  68,  70,  86,
-   71,  75,  72,  76,   1,  73,  25,  26,  87,  27,  77,  28,
-   78,   3,  29,  30,  31,  88,  32,  79,   4,  33,  34,  80,
-   81,  82,   5,  36,  13,  37,  89,  38,  39,   6,  40,  14,
-   41,  90,  42,  43,   7,  44,  45,  47,  17,  48,  49,  18,
-   50,   8,  51,  91,  52,  53,   9,  54,  55,  56,  19,  58,
-   59,  20,  60,  10,  61,  92,  62,  63,   2,  64,  65,  66,
-   21,  67,  69,  22,  11,  84,  83,  93,  16,  15
-};
-
-
-// ============ Parallel Schedule Table ============
 // ============================================================
-// 串行调度表 - 每层 1 个算子，按原始执行顺序
-// 用于对照测试或无并行场景
+// DAG 调度数据结构
 // ============================================================
 
-static const int32_t g_layer_0[] = { 0 };
-static const int32_t g_layer_1[] = { 1 };
-static const int32_t g_layer_2[] = { 2 };
-static const int32_t g_layer_3[] = { 3 };
-static const int32_t g_layer_4[] = { 4 };
-static const int32_t g_layer_5[] = { 5 };
-static const int32_t g_layer_6[] = { 6 };
-static const int32_t g_layer_7[] = { 7 };
-static const int32_t g_layer_8[] = { 8 };
-static const int32_t g_layer_9[] = { 9 };
-static const int32_t g_layer_10[] = { 10 };
-static const int32_t g_layer_11[] = { 11 };
-static const int32_t g_layer_12[] = { 12 };
-static const int32_t g_layer_13[] = { 13 };
-static const int32_t g_layer_14[] = { 14 };
-static const int32_t g_layer_15[] = { 15 };
-static const int32_t g_layer_16[] = { 16 };
-static const int32_t g_layer_17[] = { 17 };
-static const int32_t g_layer_18[] = { 18 };
-static const int32_t g_layer_19[] = { 19 };
-static const int32_t g_layer_20[] = { 20 };
-static const int32_t g_layer_21[] = { 21 };
-static const int32_t g_layer_22[] = { 22 };
-static const int32_t g_layer_23[] = { 23 };
-static const int32_t g_layer_24[] = { 24 };
-static const int32_t g_layer_25[] = { 25 };
-static const int32_t g_layer_26[] = { 26 };
-static const int32_t g_layer_27[] = { 27 };
-static const int32_t g_layer_28[] = { 28 };
-static const int32_t g_layer_29[] = { 29 };
-static const int32_t g_layer_30[] = { 30 };
-static const int32_t g_layer_31[] = { 31 };
-static const int32_t g_layer_32[] = { 32 };
-static const int32_t g_layer_33[] = { 33 };
-static const int32_t g_layer_34[] = { 34 };
-static const int32_t g_layer_35[] = { 35 };
-static const int32_t g_layer_36[] = { 36 };
-static const int32_t g_layer_37[] = { 37 };
-static const int32_t g_layer_38[] = { 38 };
-static const int32_t g_layer_39[] = { 39 };
-static const int32_t g_layer_40[] = { 40 };
-static const int32_t g_layer_41[] = { 41 };
-static const int32_t g_layer_42[] = { 42 };
-static const int32_t g_layer_43[] = { 43 };
-static const int32_t g_layer_44[] = { 44 };
-static const int32_t g_layer_45[] = { 45 };
-static const int32_t g_layer_46[] = { 46 };
-static const int32_t g_layer_47[] = { 47 };
-static const int32_t g_layer_48[] = { 48 };
-static const int32_t g_layer_49[] = { 49 };
-static const int32_t g_layer_50[] = { 50 };
-static const int32_t g_layer_51[] = { 51 };
-static const int32_t g_layer_52[] = { 52 };
-static const int32_t g_layer_53[] = { 53 };
-static const int32_t g_layer_54[] = { 54 };
-static const int32_t g_layer_55[] = { 55 };
-static const int32_t g_layer_56[] = { 56 };
-static const int32_t g_layer_57[] = { 57 };
-static const int32_t g_layer_58[] = { 58 };
-static const int32_t g_layer_59[] = { 59 };
-static const int32_t g_layer_60[] = { 60 };
-static const int32_t g_layer_61[] = { 61 };
-static const int32_t g_layer_62[] = { 62 };
-static const int32_t g_layer_63[] = { 63 };
-static const int32_t g_layer_64[] = { 64 };
-static const int32_t g_layer_65[] = { 65 };
-static const int32_t g_layer_66[] = { 66 };
-static const int32_t g_layer_67[] = { 67 };
-static const int32_t g_layer_68[] = { 68 };
-static const int32_t g_layer_69[] = { 69 };
-static const int32_t g_layer_70[] = { 70 };
-static const int32_t g_layer_71[] = { 71 };
-static const int32_t g_layer_72[] = { 72 };
-static const int32_t g_layer_73[] = { 73 };
-static const int32_t g_layer_74[] = { 74 };
-static const int32_t g_layer_75[] = { 75 };
-static const int32_t g_layer_76[] = { 76 };
-static const int32_t g_layer_77[] = { 77 };
-static const int32_t g_layer_78[] = { 78 };
-static const int32_t g_layer_79[] = { 79 };
-static const int32_t g_layer_80[] = { 80 };
-static const int32_t g_layer_81[] = { 81 };
-static const int32_t g_layer_82[] = { 82 };
-static const int32_t g_layer_83[] = { 83 };
-static const int32_t g_layer_84[] = { 84 };
-static const int32_t g_layer_85[] = { 85 };
-static const int32_t g_layer_86[] = { 86 };
-static const int32_t g_layer_87[] = { 87 };
-static const int32_t g_layer_88[] = { 88 };
-static const int32_t g_layer_89[] = { 89 };
-static const int32_t g_layer_90[] = { 90 };
-static const int32_t g_layer_91[] = { 91 };
-static const int32_t g_layer_92[] = { 92 };
-static const int32_t g_layer_93[] = { 93 };
-
-static const schedule_layer_t g_schedule[] = {
-    { g_layer_0, 1 },
-    { g_layer_1, 1 },
-    { g_layer_2, 1 },
-    { g_layer_3, 1 },
-    { g_layer_4, 1 },
-    { g_layer_5, 1 },
-    { g_layer_6, 1 },
-    { g_layer_7, 1 },
-    { g_layer_8, 1 },
-    { g_layer_9, 1 },
-    { g_layer_10, 1 },
-    { g_layer_11, 1 },
-    { g_layer_12, 1 },
-    { g_layer_13, 1 },
-    { g_layer_14, 1 },
-    { g_layer_15, 1 },
-    { g_layer_16, 1 },
-    { g_layer_17, 1 },
-    { g_layer_18, 1 },
-    { g_layer_19, 1 },
-    { g_layer_20, 1 },
-    { g_layer_21, 1 },
-    { g_layer_22, 1 },
-    { g_layer_23, 1 },
-    { g_layer_24, 1 },
-    { g_layer_25, 1 },
-    { g_layer_26, 1 },
-    { g_layer_27, 1 },
-    { g_layer_28, 1 },
-    { g_layer_29, 1 },
-    { g_layer_30, 1 },
-    { g_layer_31, 1 },
-    { g_layer_32, 1 },
-    { g_layer_33, 1 },
-    { g_layer_34, 1 },
-    { g_layer_35, 1 },
-    { g_layer_36, 1 },
-    { g_layer_37, 1 },
-    { g_layer_38, 1 },
-    { g_layer_39, 1 },
-    { g_layer_40, 1 },
-    { g_layer_41, 1 },
-    { g_layer_42, 1 },
-    { g_layer_43, 1 },
-    { g_layer_44, 1 },
-    { g_layer_45, 1 },
-    { g_layer_46, 1 },
-    { g_layer_47, 1 },
-    { g_layer_48, 1 },
-    { g_layer_49, 1 },
-    { g_layer_50, 1 },
-    { g_layer_51, 1 },
-    { g_layer_52, 1 },
-    { g_layer_53, 1 },
-    { g_layer_54, 1 },
-    { g_layer_55, 1 },
-    { g_layer_56, 1 },
-    { g_layer_57, 1 },
-    { g_layer_58, 1 },
-    { g_layer_59, 1 },
-    { g_layer_60, 1 },
-    { g_layer_61, 1 },
-    { g_layer_62, 1 },
-    { g_layer_63, 1 },
-    { g_layer_64, 1 },
-    { g_layer_65, 1 },
-    { g_layer_66, 1 },
-    { g_layer_67, 1 },
-    { g_layer_68, 1 },
-    { g_layer_69, 1 },
-    { g_layer_70, 1 },
-    { g_layer_71, 1 },
-    { g_layer_72, 1 },
-    { g_layer_73, 1 },
-    { g_layer_74, 1 },
-    { g_layer_75, 1 },
-    { g_layer_76, 1 },
-    { g_layer_77, 1 },
-    { g_layer_78, 1 },
-    { g_layer_79, 1 },
-    { g_layer_80, 1 },
-    { g_layer_81, 1 },
-    { g_layer_82, 1 },
-    { g_layer_83, 1 },
-    { g_layer_84, 1 },
-    { g_layer_85, 1 },
-    { g_layer_86, 1 },
-    { g_layer_87, 1 },
-    { g_layer_88, 1 },
-    { g_layer_89, 1 },
-    { g_layer_90, 1 },
-    { g_layer_91, 1 },
-    { g_layer_92, 1 },
-    { g_layer_93, 1 },
+// 初始入度表（编译期静态）
+static const int32_t g_initial_indegrees[94] = {
+    0, 1, 1, 1, 1, 1, 2, 2, 1, 1, 1, 1, 1, 2, 1, 2,
+    3, 1, 1, 1, 1, 1, 2, 1, 2, 3, 1, 1, 1, 1, 1, 2,
+    2, 1, 1, 1, 1, 1, 4, 1, 2, 1, 1, 1, 1, 2, 1, 2,
+    1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1, 1,
+    1, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1,
+    2, 1, 1, 1, 1, 1, 1, 1, 6, 1, 1, 1, 1, 2
 };
 
-#define NUM_LAYERS 94
+// 后继节点邻接表
+static const int32_t g_successors_0[] = { 1 };
+static const int32_t g_successors_1[] = { 2 };
+static const int32_t g_successors_2[] = { 3 };
+static const int32_t g_successors_3[] = { 4 };
+static const int32_t g_successors_4[] = { 5, 6, 7 };
+static const int32_t g_successors_5[] = { 6 };
+static const int32_t g_successors_6[] = { 7 };
+static const int32_t g_successors_7[] = { 8 };
+static const int32_t g_successors_8[] = { 9 };
+static const int32_t g_successors_9[] = { 10 };
+static const int32_t g_successors_10[] = { 11 };
+static const int32_t g_successors_11[] = { 12, 13, 16 };
+static const int32_t g_successors_12[] = { 13 };
+static const int32_t g_successors_13[] = { 14, 15, 16 };
+static const int32_t g_successors_14[] = { 15 };
+static const int32_t g_successors_15[] = { 16 };
+static const int32_t g_successors_16[] = { 17 };
+static const int32_t g_successors_17[] = { 18, 47 };
+static const int32_t g_successors_18[] = { 19 };
+static const int32_t g_successors_19[] = { 20 };
+static const int32_t g_successors_20[] = { 21, 22, 25 };
+static const int32_t g_successors_21[] = { 22 };
+static const int32_t g_successors_22[] = { 23, 24, 25 };
+static const int32_t g_successors_23[] = { 24 };
+static const int32_t g_successors_24[] = { 25 };
+static const int32_t g_successors_25[] = { 26 };
+static const int32_t g_successors_26[] = { 27, 40 };
+static const int32_t g_successors_27[] = { 28 };
+static const int32_t g_successors_28[] = { 29 };
+static const int32_t g_successors_29[] = { 30, 31, 32 };
+static const int32_t g_successors_30[] = { 31 };
+static const int32_t g_successors_31[] = { 32 };
+static const int32_t g_successors_32[] = { 33 };
+static const int32_t g_successors_33[] = { 34 };
+static const int32_t g_successors_34[] = { 35, 38 };
+static const int32_t g_successors_35[] = { 36, 38 };
+static const int32_t g_successors_36[] = { 37, 38 };
+static const int32_t g_successors_37[] = { 38 };
+static const int32_t g_successors_38[] = { 39 };
+static const int32_t g_successors_39[] = { 40, 75 };
+static const int32_t g_successors_40[] = { 41 };
+static const int32_t g_successors_41[] = { 42 };
+static const int32_t g_successors_42[] = { 43, 45 };
+static const int32_t g_successors_43[] = { 44 };
+static const int32_t g_successors_44[] = { 45 };
+static const int32_t g_successors_45[] = { 46 };
+static const int32_t g_successors_46[] = { 47, 61 };
+static const int32_t g_successors_47[] = { 48 };
+static const int32_t g_successors_48[] = { 49 };
+static const int32_t g_successors_49[] = { 50, 52 };
+static const int32_t g_successors_50[] = { 51 };
+static const int32_t g_successors_51[] = { 52 };
+static const int32_t g_successors_52[] = { 53 };
+static const int32_t g_successors_53[] = { 54, 57, 60 };
+static const int32_t g_successors_54[] = { 55 };
+static const int32_t g_successors_55[] = { 56 };
+static const int32_t g_successors_56[] = { 88 };
+static const int32_t g_successors_57[] = { 58 };
+static const int32_t g_successors_58[] = { 59 };
+static const int32_t g_successors_59[] = { 88 };
+static const int32_t g_successors_60[] = { 61 };
+static const int32_t g_successors_61[] = { 62 };
+static const int32_t g_successors_62[] = { 63 };
+static const int32_t g_successors_63[] = { 64, 66 };
+static const int32_t g_successors_64[] = { 65 };
+static const int32_t g_successors_65[] = { 66 };
+static const int32_t g_successors_66[] = { 67 };
+static const int32_t g_successors_67[] = { 68, 71, 74 };
+static const int32_t g_successors_68[] = { 69 };
+static const int32_t g_successors_69[] = { 70 };
+static const int32_t g_successors_70[] = { 88 };
+static const int32_t g_successors_71[] = { 72 };
+static const int32_t g_successors_72[] = { 73 };
+static const int32_t g_successors_73[] = { 88 };
+static const int32_t g_successors_74[] = { 75 };
+static const int32_t g_successors_75[] = { 76 };
+static const int32_t g_successors_76[] = { 77 };
+static const int32_t g_successors_77[] = { 78, 80 };
+static const int32_t g_successors_78[] = { 79 };
+static const int32_t g_successors_79[] = { 80 };
+static const int32_t g_successors_80[] = { 81 };
+static const int32_t g_successors_81[] = { 82, 85 };
+static const int32_t g_successors_82[] = { 83 };
+static const int32_t g_successors_83[] = { 84 };
+static const int32_t g_successors_84[] = { 88 };
+static const int32_t g_successors_85[] = { 86 };
+static const int32_t g_successors_86[] = { 87 };
+static const int32_t g_successors_87[] = { 88 };
+static const int32_t g_successors_88[] = { 89, 93 };
+static const int32_t g_successors_89[] = { 90 };
+static const int32_t g_successors_90[] = { 91 };
+static const int32_t g_successors_91[] = { 92 };
+static const int32_t g_successors_92[] = { 93 };
+static const int32_t g_successors_93[] = { -1 };  // 无后继（哨兵值）
+
+static const int32_t* g_successors[94] = {
+    g_successors_0,
+    g_successors_1,
+    g_successors_2,
+    g_successors_3,
+    g_successors_4,
+    g_successors_5,
+    g_successors_6,
+    g_successors_7,
+    g_successors_8,
+    g_successors_9,
+    g_successors_10,
+    g_successors_11,
+    g_successors_12,
+    g_successors_13,
+    g_successors_14,
+    g_successors_15,
+    g_successors_16,
+    g_successors_17,
+    g_successors_18,
+    g_successors_19,
+    g_successors_20,
+    g_successors_21,
+    g_successors_22,
+    g_successors_23,
+    g_successors_24,
+    g_successors_25,
+    g_successors_26,
+    g_successors_27,
+    g_successors_28,
+    g_successors_29,
+    g_successors_30,
+    g_successors_31,
+    g_successors_32,
+    g_successors_33,
+    g_successors_34,
+    g_successors_35,
+    g_successors_36,
+    g_successors_37,
+    g_successors_38,
+    g_successors_39,
+    g_successors_40,
+    g_successors_41,
+    g_successors_42,
+    g_successors_43,
+    g_successors_44,
+    g_successors_45,
+    g_successors_46,
+    g_successors_47,
+    g_successors_48,
+    g_successors_49,
+    g_successors_50,
+    g_successors_51,
+    g_successors_52,
+    g_successors_53,
+    g_successors_54,
+    g_successors_55,
+    g_successors_56,
+    g_successors_57,
+    g_successors_58,
+    g_successors_59,
+    g_successors_60,
+    g_successors_61,
+    g_successors_62,
+    g_successors_63,
+    g_successors_64,
+    g_successors_65,
+    g_successors_66,
+    g_successors_67,
+    g_successors_68,
+    g_successors_69,
+    g_successors_70,
+    g_successors_71,
+    g_successors_72,
+    g_successors_73,
+    g_successors_74,
+    g_successors_75,
+    g_successors_76,
+    g_successors_77,
+    g_successors_78,
+    g_successors_79,
+    g_successors_80,
+    g_successors_81,
+    g_successors_82,
+    g_successors_83,
+    g_successors_84,
+    g_successors_85,
+    g_successors_86,
+    g_successors_87,
+    g_successors_88,
+    g_successors_89,
+    g_successors_90,
+    g_successors_91,
+    g_successors_92,
+    g_successors_93,
+};
+
+// 后继节点数量
+static const int32_t g_successor_counts[94] = {
+    1, 1, 1, 1, 3, 1, 1, 1, 1, 1, 1, 3, 1, 3, 1, 1,
+    1, 2, 1, 1, 3, 1, 3, 1, 1, 1, 2, 1, 1, 3, 1, 1,
+    1, 1, 2, 2, 2, 1, 1, 2, 1, 1, 2, 1, 1, 1, 2, 1,
+    1, 2, 1, 1, 1, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2,
+    1, 1, 1, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1, 1,
+    1, 2, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 0
+};
+
+// ============================================================
+// Scheduler-Worker 运行时核心代码
+// 基于建议书 3.3.4 节的闭环调度模型
+// ============================================================
 
 #include <pthread.h>
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <time.h>
 
-typedef struct {
-    pthread_mutex_t mtx;
-    pthread_cond_t cv;
-    int count;
-    int arrived;
-} tvmrt_barrier_t;
-
-static int tvmrt_barrier_init(tvmrt_barrier_t* b, int count) {
-    b->count = count;
-    b->arrived = 0;
-    if (pthread_mutex_init(&b->mtx, NULL)) return -1;
-    if (pthread_cond_init(&b->cv, NULL)) return -1;
-    return 0;
-}
-
-static void tvmrt_barrier_destroy(tvmrt_barrier_t* b) {
-    pthread_mutex_destroy(&b->mtx);
-    pthread_cond_destroy(&b->cv);
-}
-
-static void tvmrt_barrier_wait(tvmrt_barrier_t* b) {
-    pthread_mutex_lock(&b->mtx);
-    b->arrived++;
-    if (b->arrived == b->count) {
-        b->arrived = 0;
-        pthread_cond_broadcast(&b->cv);
-    } else {
-        while (b->arrived != 0) pthread_cond_wait(&b->cv, &b->mtx);
-    }
-    pthread_mutex_unlock(&b->mtx);
-}
+// ============ 线程安全队列 ============
 
 typedef struct {
-    const schedule_layer_t* schedule;
-    int num_layers;
-    int worker_count;
-    int active_count;
-    uint8_t* cws;
-    uint8_t* ws;
-    op_args_t* op_args;
-    volatile int layer_idx;
-    volatile int stop;
-    volatile int err;
-    tvmrt_barrier_t start_barrier;  // 等待 main 准备好
-    tvmrt_barrier_t end_barrier;    // 等待所有人完成
-} tvmrt_ctx_t;
+  int32_t data[OP_COUNT + 16]; // 预留终止信号空间
+  int head;
+  int tail;
+  int count;
+  pthread_mutex_t lock;
+  pthread_cond_t not_empty;
+} SafeQueue;
 
-typedef struct { tvmrt_ctx_t* ctx; int tid; } tvmrt_worker_arg_t;
-
-static void* tvmrt_worker(void* arg) {
-    tvmrt_worker_arg_t* wa = (tvmrt_worker_arg_t*)arg;
-    tvmrt_ctx_t* ctx = wa->ctx;
-    int tid = wa->tid;
-    int participants = ctx->active_count;
-    
-    while (1) {
-        // 等待 main 准备好 (start barrier)
-        tvmrt_barrier_wait(&ctx->start_barrier);
-        
-        if (ctx->stop) break;
-        
-        int layer = ctx->layer_idx;
-        const schedule_layer_t* sl = &ctx->schedule[layer];
-        for (int j = tid; j < sl->count; j += participants) {
-            int32_t op_idx = sl->op_indices[j];
-            int ret = g_op_call_table[g_op_func_idx[op_idx]](&ctx->op_args[op_idx], ctx->cws, ctx->ws);
-            if (ret != 0) ctx->err = ret;
-        }
-        
-        // 等待所有人完成 (end barrier)
-        tvmrt_barrier_wait(&ctx->end_barrier);
-    }
-    return NULL;
+static void queue_init(SafeQueue *q) {
+  memset(q->data, 0, sizeof(q->data));
+  q->head = 0;
+  q->tail = 0;
+  q->count = 0;
+  pthread_mutex_init(&q->lock, NULL);
+  pthread_cond_init(&q->not_empty, NULL);
 }
 
-static int tvmrt_parse_workers(void) {
-    const char* env = getenv("TVMRT_NUM_WORKERS");
-    if (!env) env = getenv("OMP_NUM_THREADS");
-    int n = env ? atoi(env) : 3;
-    if (n < 1) n = 1;
-    return n;
+static void queue_destroy(SafeQueue *q) {
+  pthread_mutex_destroy(&q->lock);
+  pthread_cond_destroy(&q->not_empty);
 }
 
-static int tvmrt_run(uint8_t* cws, uint8_t* ws, op_args_t op_args[]) {
-    const char* trace_env = getenv("TVMRT_TRACE");
-    int trace_every = trace_env ? atoi(trace_env) : 0;
-    const char* max_env = getenv("TVMRT_MAX_LAYERS");
-    int max_layers = max_env ? atoi(max_env) : NUM_LAYERS;
-    if (max_layers < 1 || max_layers > NUM_LAYERS) max_layers = NUM_LAYERS;
-
-    int worker_count = tvmrt_parse_workers();
-    tvmrt_ctx_t ctx = {
-        .schedule = g_schedule,
-        .num_layers = max_layers,
-        .worker_count = worker_count,
-        .active_count = worker_count + 1,  // workers + main
-        .cws = cws,
-        .ws = ws,
-        .op_args = op_args,
-        .layer_idx = -1,
-        .stop = 0,
-        .err = 0
-    };
-
-    int participants = ctx.active_count;
-    tvmrt_barrier_init(&ctx.start_barrier, participants);
-    tvmrt_barrier_init(&ctx.end_barrier, participants);
-
-    pthread_t* threads = (pthread_t*)malloc(sizeof(pthread_t) * ctx.worker_count);
-    tvmrt_worker_arg_t* args = (tvmrt_worker_arg_t*)malloc(sizeof(tvmrt_worker_arg_t) * ctx.worker_count);
-    for (int i = 0; i < ctx.worker_count; ++i) {
-        args[i].ctx = &ctx;
-        args[i].tid = i;
-        pthread_create(&threads[i], NULL, tvmrt_worker, &args[i]);
-    }
-
-    int main_tid = ctx.worker_count;
-    struct timespec ts0, ts1;
-    if (trace_every > 0) clock_gettime(CLOCK_MONOTONIC, &ts0);
-    
-    for (int layer = 0; layer < ctx.num_layers; ++layer) {
-        ctx.layer_idx = layer;
-        
-        // 通知所有 workers 开始 (start barrier)
-        tvmrt_barrier_wait(&ctx.start_barrier);
-        
-        // Main 线程也做自己的工作
-        const schedule_layer_t* sl = &ctx.schedule[layer];
-        for (int j = main_tid; j < sl->count; j += participants) {
-            int32_t op_idx = sl->op_indices[j];
-            int ret = g_op_call_table[g_op_func_idx[op_idx]](&ctx.op_args[op_idx], ctx.cws, ctx.ws);
-            if (ret != 0) ctx.err = ret;
-        }
-        
-        // 等待所有人完成 (end barrier)
-        tvmrt_barrier_wait(&ctx.end_barrier);
-        
-        if (trace_every > 0 && (layer % trace_every == 0)) {
-            clock_gettime(CLOCK_MONOTONIC, &ts1);
-            double ms = (ts1.tv_sec - ts0.tv_sec) * 1000.0 +
-                        (ts1.tv_nsec - ts0.tv_nsec) / 1e6;
-            printf("[tvmrt] layer %d/%d done in %.2f ms\\n", layer, ctx.num_layers, ms);
-            fflush(stdout);
-            ts0 = ts1;
-        }
-        if (ctx.err) break;
-    }
-
-    // 通知 workers 停止
-    ctx.stop = 1;
-    tvmrt_barrier_wait(&ctx.start_barrier);
-
-    for (int i = 0; i < ctx.worker_count; ++i) pthread_join(threads[i], NULL);
-
-    tvmrt_barrier_destroy(&ctx.start_barrier);
-    tvmrt_barrier_destroy(&ctx.end_barrier);
-    free(threads);
-    free(args);
-    return ctx.err;
+static void queue_push(SafeQueue *q, int32_t value) {
+  pthread_mutex_lock(&q->lock);
+  q->data[q->tail] = value;
+  q->tail = (q->tail + 1) % (OP_COUNT + 16);
+  q->count++;
+  pthread_cond_signal(&q->not_empty);
+  pthread_mutex_unlock(&q->lock);
 }
 
-// ================================================
+static int32_t queue_pop(SafeQueue *q) {
+  pthread_mutex_lock(&q->lock);
+  while (q->count == 0) {
+    pthread_cond_wait(&q->not_empty, &q->lock);
+  }
+  int32_t value = q->data[q->head];
+  q->head = (q->head + 1) % (OP_COUNT + 16);
+  q->count--;
+  pthread_mutex_unlock(&q->lock);
+  return value;
+}
 
-#ifdef __cplusplus
-extern "C"
-#endif
-TVM_DLL int32_t tvmgen_default_fused_concatenate(float* p0, float* p0_1, float* p1, float* p2, float* concatenate_ext, uint8_t* global_const_workspace_16_var, uint8_t* global_workspace_17_var);
-#ifdef __cplusplus
-extern "C"
-#endif
-TVM_DLL int32_t tvmgen_default_fused_concatenate_1(float* p0, float* p0_1, float* p1, float* p2, float* p3, float* concatenate_ext, uint8_t* global_const_workspace_34_var, uint8_t* global_workspace_35_var);
-#ifdef __cplusplus
-extern "C"
-#endif
-TVM_DLL int32_t tvmgen_default_fused_concatenate_10(float* p0, float* p0_1, float* p1, float* p2, float* concatenate_ext, uint8_t* global_const_workspace_162_var, uint8_t* global_workspace_163_var);
-#ifdef __cplusplus
-extern "C"
-#endif
-TVM_DLL int32_t tvmgen_default_fused_concatenate_2(float* p0, float* p0_1, float* p1, float* p2, float* p3, float* concatenate_ext, uint8_t* global_const_workspace_52_var, uint8_t* global_workspace_53_var);
-#ifdef __cplusplus
-extern "C"
-#endif
-TVM_DLL int32_t tvmgen_default_fused_concatenate_3(float* p0, float* p0_1, float* p1, float* p2, float* concatenate_ext, uint8_t* global_const_workspace_66_var, uint8_t* global_workspace_67_var);
-#ifdef __cplusplus
-extern "C"
-#endif
-TVM_DLL int32_t tvmgen_default_fused_concatenate_4(float* p0, float* p1, float* p2, float* p3, float* concatenate_ext, uint8_t* global_const_workspace_78_var, uint8_t* global_workspace_79_var);
-#ifdef __cplusplus
-extern "C"
-#endif
-TVM_DLL int32_t tvmgen_default_fused_concatenate_5(float* p0, float* p0_1, float* p1, float* p2, float* concatenate_ext, uint8_t* global_const_workspace_92_var, uint8_t* global_workspace_93_var);
-#ifdef __cplusplus
-extern "C"
-#endif
-TVM_DLL int32_t tvmgen_default_fused_concatenate_6(float* p0, float* p0_1, float* p1, float* p2, float* concatenate_ext, uint8_t* global_const_workspace_106_var, uint8_t* global_workspace_107_var);
-#ifdef __cplusplus
-extern "C"
-#endif
-TVM_DLL int32_t tvmgen_default_fused_concatenate_7(float* p0, float* p1, float* concatenate_ext, uint8_t* global_const_workspace_124_var, uint8_t* global_workspace_125_var);
-#ifdef __cplusplus
-extern "C"
-#endif
-TVM_DLL int32_t tvmgen_default_fused_concatenate_8(float* p0, float* p0_1, float* p1, float* p2, float* concatenate_ext, uint8_t* global_const_workspace_134_var, uint8_t* global_workspace_135_var);
-#ifdef __cplusplus
-extern "C"
-#endif
-TVM_DLL int32_t tvmgen_default_fused_concatenate_9(float* p0, float* p1, float* concatenate_ext, uint8_t* global_const_workspace_152_var, uint8_t* global_workspace_153_var);
-#ifdef __cplusplus
-extern "C"
-#endif
-TVM_DLL int32_t tvmgen_default_fused_concatenate_layout_transform_reshape_concatenate_layout_transform_reshape__7c5ad37d2665c07f_(float* p0, float* p1, float* p2, float* p3, float* p4, float* p5, float* T_split, float* T_split_1, uint8_t* global_const_workspace_178_var, uint8_t* global_workspace_179_var);
-#ifdef __cplusplus
-extern "C"
-#endif
-TVM_DLL int32_t tvmgen_default_fused_layout_transform(float* p0, float* T_layout_trans, uint8_t* global_const_workspace_2_var, uint8_t* global_workspace_3_var);
-#ifdef __cplusplus
-extern "C"
-#endif
-TVM_DLL int32_t tvmgen_default_fused_layout_transform_image_resize2d_layout_transform_concatenate_layout_transf_1bf4794317454c42_(float* p0, float* p1, float* T_layout_trans, uint8_t* global_const_workspace_82_var, uint8_t* global_workspace_83_var);
-#ifdef __cplusplus
-extern "C"
-#endif
-TVM_DLL int32_t tvmgen_default_fused_layout_transform_image_resize2d_layout_transform_concatenate_layout_transf_1bf4794317454c42__1(float* p0, float* p1, float* T_layout_trans, uint8_t* global_const_workspace_96_var, uint8_t* global_workspace_97_var);
-#ifdef __cplusplus
-extern "C"
-#endif
-TVM_DLL int32_t tvmgen_default_fused_layout_transform_reshape_strided_slice_subtract_strided_slice_add_add_divi_e52109f6a309057f_(float* p0, float* p1, float* p1_1, float* concatenate_ext, uint8_t* global_const_workspace_188_var, uint8_t* global_workspace_189_var);
-#ifdef __cplusplus
-extern "C"
-#endif
-TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc(float* p0, float* conv2d_NCHWc, uint8_t* global_const_workspace_186_var, uint8_t* global_workspace_187_var);
-#ifdef __cplusplus
-extern "C"
-#endif
-TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add(float* p0, float* T_add, uint8_t* global_const_workspace_114_var, uint8_t* global_workspace_115_var);
-#ifdef __cplusplus
-extern "C"
-#endif
-TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_1(float* p0, float* T_add, uint8_t* global_const_workspace_120_var, uint8_t* global_workspace_121_var);
-#ifdef __cplusplus
-extern "C"
-#endif
-TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_2(float* p0, float* T_add, uint8_t* global_const_workspace_142_var, uint8_t* global_workspace_143_var);
-#ifdef __cplusplus
-extern "C"
-#endif
-TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_3(float* p0, float* T_add, uint8_t* global_const_workspace_148_var, uint8_t* global_workspace_149_var);
-#ifdef __cplusplus
-extern "C"
-#endif
-TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_4(float* p0, float* T_add, uint8_t* global_const_workspace_170_var, uint8_t* global_workspace_171_var);
-#ifdef __cplusplus
-extern "C"
-#endif
-TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_5(float* p0, float* T_add, uint8_t* global_const_workspace_176_var, uint8_t* global_workspace_177_var);
-#ifdef __cplusplus
-extern "C"
-#endif
-TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply(float* p0, float* T_multiply, uint8_t* global_const_workspace_4_var, uint8_t* global_workspace_5_var);
-#ifdef __cplusplus
-extern "C"
-#endif
-TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_1(float* p0, float* T_multiply, uint8_t* global_const_workspace_6_var, uint8_t* global_workspace_7_var);
-#ifdef __cplusplus
-extern "C"
-#endif
-TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_10(float* p0, float* T_multiply, uint8_t* global_const_workspace_38_var, uint8_t* global_workspace_39_var);
-#ifdef __cplusplus
-extern "C"
-#endif
-TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_11(float* p0, float* T_multiply, uint8_t* global_const_workspace_40_var, uint8_t* global_workspace_41_var);
-#ifdef __cplusplus
-extern "C"
-#endif
-TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_12(float* p0, float* T_multiply, uint8_t* global_const_workspace_44_var, uint8_t* global_workspace_45_var);
-#ifdef __cplusplus
-extern "C"
-#endif
-TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_13(float* p0, float* T_multiply, uint8_t* global_const_workspace_48_var, uint8_t* global_workspace_49_var);
-#ifdef __cplusplus
-extern "C"
-#endif
-TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_14(float* p0, float* T_multiply, uint8_t* global_const_workspace_54_var, uint8_t* global_workspace_55_var);
-#ifdef __cplusplus
-extern "C"
-#endif
-TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_15(float* p0, float* T_multiply, uint8_t* global_const_workspace_56_var, uint8_t* global_workspace_57_var);
-#ifdef __cplusplus
-extern "C"
-#endif
-TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_16(float* p0, float* T_multiply, uint8_t* global_const_workspace_58_var, uint8_t* global_workspace_59_var);
-#ifdef __cplusplus
-extern "C"
-#endif
-TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_17(float* p0, float* T_multiply, uint8_t* global_const_workspace_62_var, uint8_t* global_workspace_63_var);
-#ifdef __cplusplus
-extern "C"
-#endif
-TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_18(float* p0, float* T_multiply, uint8_t* global_const_workspace_68_var, uint8_t* global_workspace_69_var);
-#ifdef __cplusplus
-extern "C"
-#endif
-TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_19(float* p0, float* T_multiply, uint8_t* global_const_workspace_70_var, uint8_t* global_workspace_71_var);
-#ifdef __cplusplus
-extern "C"
-#endif
-TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_2(float* p0, float* T_multiply, uint8_t* global_const_workspace_8_var, uint8_t* global_workspace_9_var);
-#ifdef __cplusplus
-extern "C"
-#endif
-TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_20(float* p0, float* T_multiply, uint8_t* global_const_workspace_80_var, uint8_t* global_workspace_81_var);
-#ifdef __cplusplus
-extern "C"
-#endif
-TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_21(float* p0, float* T_multiply, uint8_t* global_const_workspace_84_var, uint8_t* global_workspace_85_var);
-#ifdef __cplusplus
-extern "C"
-#endif
-TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_22(float* p0, float* T_multiply, uint8_t* global_const_workspace_88_var, uint8_t* global_workspace_89_var);
-#ifdef __cplusplus
-extern "C"
-#endif
-TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_23(float* p0, float* T_multiply, uint8_t* global_const_workspace_90_var, uint8_t* global_workspace_91_var);
-#ifdef __cplusplus
-extern "C"
-#endif
-TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_24(float* p0, float* T_multiply, uint8_t* global_const_workspace_94_var, uint8_t* global_workspace_95_var);
-#ifdef __cplusplus
-extern "C"
-#endif
-TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_25(float* p0, float* T_multiply, uint8_t* global_const_workspace_98_var, uint8_t* global_workspace_99_var);
-#ifdef __cplusplus
-extern "C"
-#endif
-TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_26(float* p0, float* T_multiply, uint8_t* global_const_workspace_102_var, uint8_t* global_workspace_103_var);
-#ifdef __cplusplus
-extern "C"
-#endif
-TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_27(float* p0, float* T_multiply, uint8_t* global_const_workspace_104_var, uint8_t* global_workspace_105_var);
-#ifdef __cplusplus
-extern "C"
-#endif
-TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_28(float* p0, float* T_multiply, uint8_t* global_const_workspace_108_var, uint8_t* global_workspace_109_var);
-#ifdef __cplusplus
-extern "C"
-#endif
-TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_29(float* p0, float* T_multiply, uint8_t* global_const_workspace_110_var, uint8_t* global_workspace_111_var);
-#ifdef __cplusplus
-extern "C"
-#endif
-TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_3(float* p0, float* T_multiply, uint8_t* global_const_workspace_12_var, uint8_t* global_workspace_13_var);
-#ifdef __cplusplus
-extern "C"
-#endif
-TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_30(float* p0, float* T_multiply, uint8_t* global_const_workspace_112_var, uint8_t* global_workspace_113_var);
-#ifdef __cplusplus
-extern "C"
-#endif
-TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_31(float* p0, float* T_multiply, uint8_t* global_const_workspace_116_var, uint8_t* global_workspace_117_var);
-#ifdef __cplusplus
-extern "C"
-#endif
-TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_32(float* p0, float* T_multiply, uint8_t* global_const_workspace_118_var, uint8_t* global_workspace_119_var);
-#ifdef __cplusplus
-extern "C"
-#endif
-TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_33(float* p0, float* T_multiply, uint8_t* global_const_workspace_122_var, uint8_t* global_workspace_123_var);
-#ifdef __cplusplus
-extern "C"
-#endif
-TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_34(float* p0, float* T_multiply, uint8_t* global_const_workspace_126_var, uint8_t* global_workspace_127_var);
-#ifdef __cplusplus
-extern "C"
-#endif
-TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_35(float* p0, float* T_multiply, uint8_t* global_const_workspace_130_var, uint8_t* global_workspace_131_var);
-#ifdef __cplusplus
-extern "C"
-#endif
-TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_36(float* p0, float* T_multiply, uint8_t* global_const_workspace_132_var, uint8_t* global_workspace_133_var);
-#ifdef __cplusplus
-extern "C"
-#endif
-TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_37(float* p0, float* T_multiply, uint8_t* global_const_workspace_136_var, uint8_t* global_workspace_137_var);
-#ifdef __cplusplus
-extern "C"
-#endif
-TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_38(float* p0, float* T_multiply, uint8_t* global_const_workspace_138_var, uint8_t* global_workspace_139_var);
-#ifdef __cplusplus
-extern "C"
-#endif
-TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_39(float* p0, float* T_multiply, uint8_t* global_const_workspace_140_var, uint8_t* global_workspace_141_var);
-#ifdef __cplusplus
-extern "C"
-#endif
-TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_4(float* p0, float* T_multiply, uint8_t* global_const_workspace_18_var, uint8_t* global_workspace_19_var);
-#ifdef __cplusplus
-extern "C"
-#endif
-TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_40(float* p0, float* T_multiply, uint8_t* global_const_workspace_144_var, uint8_t* global_workspace_145_var);
-#ifdef __cplusplus
-extern "C"
-#endif
-TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_41(float* p0, float* T_multiply, uint8_t* global_const_workspace_146_var, uint8_t* global_workspace_147_var);
-#ifdef __cplusplus
-extern "C"
-#endif
-TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_42(float* p0, float* T_multiply, uint8_t* global_const_workspace_150_var, uint8_t* global_workspace_151_var);
-#ifdef __cplusplus
-extern "C"
-#endif
-TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_43(float* p0, float* T_multiply, uint8_t* global_const_workspace_154_var, uint8_t* global_workspace_155_var);
-#ifdef __cplusplus
-extern "C"
-#endif
-TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_44(float* p0, float* T_multiply, uint8_t* global_const_workspace_158_var, uint8_t* global_workspace_159_var);
-#ifdef __cplusplus
-extern "C"
-#endif
-TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_45(float* p0, float* T_multiply, uint8_t* global_const_workspace_160_var, uint8_t* global_workspace_161_var);
-#ifdef __cplusplus
-extern "C"
-#endif
-TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_46(float* p0, float* T_multiply, uint8_t* global_const_workspace_164_var, uint8_t* global_workspace_165_var);
-#ifdef __cplusplus
-extern "C"
-#endif
-TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_47(float* p0, float* T_multiply, uint8_t* global_const_workspace_166_var, uint8_t* global_workspace_167_var);
-#ifdef __cplusplus
-extern "C"
-#endif
-TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_48(float* p0, float* T_multiply, uint8_t* global_const_workspace_168_var, uint8_t* global_workspace_169_var);
-#ifdef __cplusplus
-extern "C"
-#endif
-TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_49(float* p0, float* T_multiply, uint8_t* global_const_workspace_172_var, uint8_t* global_workspace_173_var);
-#ifdef __cplusplus
-extern "C"
-#endif
-TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_5(float* p0, float* T_multiply, uint8_t* global_const_workspace_20_var, uint8_t* global_workspace_21_var);
-#ifdef __cplusplus
-extern "C"
-#endif
-TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_50(float* p0, float* T_multiply, uint8_t* global_const_workspace_174_var, uint8_t* global_workspace_175_var);
-#ifdef __cplusplus
-extern "C"
-#endif
-TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_6(float* p0, float* T_multiply, uint8_t* global_const_workspace_22_var, uint8_t* global_workspace_23_var);
-#ifdef __cplusplus
-extern "C"
-#endif
-TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_7(float* p0, float* T_multiply, uint8_t* global_const_workspace_26_var, uint8_t* global_workspace_27_var);
-#ifdef __cplusplus
-extern "C"
-#endif
-TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_8(float* p0, float* T_multiply, uint8_t* global_const_workspace_30_var, uint8_t* global_workspace_31_var);
-#ifdef __cplusplus
-extern "C"
-#endif
-TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_9(float* p0, float* T_multiply, uint8_t* global_const_workspace_36_var, uint8_t* global_workspace_37_var);
-#ifdef __cplusplus
-extern "C"
-#endif
-TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_add(float* p0, float* p1, float* T_add, uint8_t* global_const_workspace_14_var, uint8_t* global_workspace_15_var);
-#ifdef __cplusplus
-extern "C"
-#endif
-TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_add_1(float* p0, float* p1, float* T_add, uint8_t* global_const_workspace_28_var, uint8_t* global_workspace_29_var);
-#ifdef __cplusplus
-extern "C"
-#endif
-TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_add_2(float* p0, float* p1, float* T_add, uint8_t* global_const_workspace_32_var, uint8_t* global_workspace_33_var);
-#ifdef __cplusplus
-extern "C"
-#endif
-TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_add_3(float* p0, float* p1, float* T_add, uint8_t* global_const_workspace_46_var, uint8_t* global_workspace_47_var);
-#ifdef __cplusplus
-extern "C"
-#endif
-TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_add_4(float* p0, float* p1, float* T_add, uint8_t* global_const_workspace_50_var, uint8_t* global_workspace_51_var);
-#ifdef __cplusplus
-extern "C"
-#endif
-TVM_DLL int32_t tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_add_5(float* p0, float* p1, float* T_add, uint8_t* global_const_workspace_64_var, uint8_t* global_workspace_65_var);
-#ifdef __cplusplus
-extern "C"
-#endif
-TVM_DLL int32_t tvmgen_default_fused_nn_max_pool2d(float* p0, float* pool_max, uint8_t* global_const_workspace_72_var, uint8_t* global_workspace_73_var);
-#ifdef __cplusplus
-extern "C"
-#endif
-TVM_DLL int32_t tvmgen_default_fused_nn_max_pool2d_1(float* p0, float* pool_max, uint8_t* global_const_workspace_74_var, uint8_t* global_workspace_75_var);
-#ifdef __cplusplus
-extern "C"
-#endif
-TVM_DLL int32_t tvmgen_default_fused_nn_max_pool2d_2(float* p0, float* pool_max, uint8_t* global_const_workspace_76_var, uint8_t* global_workspace_77_var);
-#ifdef __cplusplus
-extern "C"
-#endif
-TVM_DLL int32_t tvmgen_default_fused_nn_softmax(float* p0, float* T_softmax_norm, uint8_t* global_const_workspace_182_var, uint8_t* global_workspace_183_var);
-#ifdef __cplusplus
-extern "C"
-#endif
-TVM_DLL int32_t tvmgen_default_fused_reshape_transpose(float* p0, float* p0_1, float* T_transpose, uint8_t* global_const_workspace_180_var, uint8_t* global_workspace_181_var);
-#ifdef __cplusplus
-extern "C"
-#endif
-TVM_DLL int32_t tvmgen_default_fused_split(float* p0, float* T_split, float* T_split_1, uint8_t* global_const_workspace_10_var, uint8_t* global_workspace_11_var);
-#ifdef __cplusplus
-extern "C"
-#endif
-TVM_DLL int32_t tvmgen_default_fused_split_1(float* p0, float* T_split, float* T_split_1, uint8_t* global_const_workspace_24_var, uint8_t* global_workspace_25_var);
-#ifdef __cplusplus
-extern "C"
-#endif
-TVM_DLL int32_t tvmgen_default_fused_split_2(float* p0, float* T_split, float* T_split_1, uint8_t* global_const_workspace_42_var, uint8_t* global_workspace_43_var);
-#ifdef __cplusplus
-extern "C"
-#endif
-TVM_DLL int32_t tvmgen_default_fused_split_3(float* p0, float* T_split, float* T_split_1, uint8_t* global_const_workspace_60_var, uint8_t* global_workspace_61_var);
-#ifdef __cplusplus
-extern "C"
-#endif
-TVM_DLL int32_t tvmgen_default_fused_split_4(float* p0, float* T_split, float* T_split_1, uint8_t* global_const_workspace_86_var, uint8_t* global_workspace_87_var);
-#ifdef __cplusplus
-extern "C"
-#endif
-TVM_DLL int32_t tvmgen_default_fused_split_5(float* p0, float* T_split, float* T_split_1, uint8_t* global_const_workspace_100_var, uint8_t* global_workspace_101_var);
-#ifdef __cplusplus
-extern "C"
-#endif
-TVM_DLL int32_t tvmgen_default_fused_split_6(float* p0, float* T_split, float* T_split_1, uint8_t* global_const_workspace_128_var, uint8_t* global_workspace_129_var);
-#ifdef __cplusplus
-extern "C"
-#endif
-TVM_DLL int32_t tvmgen_default_fused_split_7(float* p0, float* T_split, float* T_split_1, uint8_t* global_const_workspace_156_var, uint8_t* global_workspace_157_var);
-#ifdef __cplusplus
-extern "C"
-#endif
-TVM_DLL int32_t tvmgen_default_fused_transpose_layout_transform(float* p0, float* T_layout_trans, uint8_t* global_const_workspace_184_var, uint8_t* global_workspace_185_var);
-#ifdef __cplusplus
-extern "C"
-#endif
-TVM_DLL int32_t tvmgen_default___tvm_main__(float* images_buffer_var, float* output_buffer_var, uint8_t* global_const_workspace_0_var, uint8_t* global_workspace_1_var);
-#ifdef __cplusplus
-extern "C"
-#endif
-TVM_DLL float expf(float);
-#ifdef __cplusplus
-extern "C"
-#endif
-TVM_DLL float expf(float);
-#ifdef __cplusplus
-extern "C"
-#endif
-TVM_DLL float expf(float);
-#ifdef __cplusplus
-extern "C"
-#endif
-TVM_DLL float expf(float);
-#ifdef __cplusplus
-extern "C"
-#endif
-TVM_DLL float expf(float);
-#ifdef __cplusplus
-extern "C"
-#endif
-TVM_DLL float expf(float);
-#ifdef __cplusplus
-extern "C"
-#endif
-TVM_DLL float expf(float);
-#ifdef __cplusplus
-extern "C"
-#endif
-TVM_DLL float expf(float);
-#ifdef __cplusplus
-extern "C"
-#endif
-TVM_DLL float expf(float);
-#ifdef __cplusplus
-extern "C"
-#endif
-TVM_DLL float expf(float);
-#ifdef __cplusplus
-extern "C"
-#endif
-TVM_DLL float expf(float);
-#ifdef __cplusplus
-extern "C"
-#endif
-TVM_DLL float expf(float);
-#ifdef __cplusplus
-extern "C"
-#endif
-TVM_DLL float expf(float);
-#ifdef __cplusplus
-extern "C"
-#endif
-TVM_DLL float expf(float);
-#ifdef __cplusplus
-extern "C"
-#endif
-TVM_DLL float expf(float);
-#ifdef __cplusplus
-extern "C"
-#endif
-TVM_DLL float expf(float);
-#ifdef __cplusplus
-extern "C"
-#endif
-TVM_DLL float expf(float);
-#ifdef __cplusplus
-extern "C"
-#endif
-TVM_DLL float expf(float);
-#ifdef __cplusplus
-extern "C"
-#endif
-TVM_DLL float expf(float);
-#ifdef __cplusplus
-extern "C"
-#endif
-TVM_DLL float expf(float);
-#ifdef __cplusplus
-extern "C"
-#endif
-TVM_DLL float expf(float);
-#ifdef __cplusplus
-extern "C"
-#endif
-TVM_DLL float expf(float);
-#ifdef __cplusplus
-extern "C"
-#endif
-TVM_DLL float expf(float);
-#ifdef __cplusplus
-extern "C"
-#endif
-TVM_DLL float expf(float);
-#ifdef __cplusplus
-extern "C"
-#endif
-TVM_DLL float expf(float);
-#ifdef __cplusplus
-extern "C"
-#endif
-TVM_DLL float expf(float);
-#ifdef __cplusplus
-extern "C"
-#endif
-TVM_DLL float expf(float);
-#ifdef __cplusplus
-extern "C"
-#endif
-TVM_DLL float expf(float);
-#ifdef __cplusplus
-extern "C"
-#endif
-TVM_DLL float expf(float);
-#ifdef __cplusplus
-extern "C"
-#endif
-TVM_DLL float expf(float);
-#ifdef __cplusplus
-extern "C"
-#endif
-TVM_DLL float expf(float);
-#ifdef __cplusplus
-extern "C"
-#endif
-TVM_DLL float expf(float);
-#ifdef __cplusplus
-extern "C"
-#endif
-TVM_DLL float expf(float);
-#ifdef __cplusplus
-extern "C"
-#endif
-TVM_DLL float expf(float);
-#ifdef __cplusplus
-extern "C"
-#endif
-TVM_DLL float expf(float);
-#ifdef __cplusplus
-extern "C"
-#endif
-TVM_DLL float expf(float);
-#ifdef __cplusplus
-extern "C"
-#endif
-TVM_DLL float expf(float);
-#ifdef __cplusplus
-extern "C"
-#endif
-TVM_DLL float expf(float);
-#ifdef __cplusplus
-extern "C"
-#endif
-TVM_DLL float expf(float);
-#ifdef __cplusplus
-extern "C"
-#endif
-TVM_DLL float expf(float);
-#ifdef __cplusplus
-extern "C"
-#endif
-TVM_DLL float expf(float);
-#ifdef __cplusplus
-extern "C"
-#endif
-TVM_DLL float expf(float);
-#ifdef __cplusplus
-extern "C"
-#endif
-TVM_DLL float expf(float);
-#ifdef __cplusplus
-extern "C"
-#endif
-TVM_DLL float expf(float);
-#ifdef __cplusplus
-extern "C"
-#endif
-TVM_DLL float expf(float);
-#ifdef __cplusplus
-extern "C"
-#endif
-TVM_DLL float expf(float);
-#ifdef __cplusplus
-extern "C"
-#endif
-TVM_DLL float expf(float);
-#ifdef __cplusplus
-extern "C"
-#endif
-TVM_DLL float expf(float);
-#ifdef __cplusplus
-extern "C"
-#endif
-TVM_DLL float expf(float);
-#ifdef __cplusplus
-extern "C"
-#endif
-TVM_DLL float expf(float);
-#ifdef __cplusplus
-extern "C"
-#endif
-TVM_DLL float expf(float);
-#ifdef __cplusplus
-extern "C"
-#endif
-TVM_DLL float expf(float);
-#ifdef __cplusplus
-extern "C"
-#endif
-TVM_DLL float expf(float);
-#ifdef __cplusplus
-extern "C"
-#endif
-TVM_DLL float expf(float);
-#ifdef __cplusplus
-extern "C"
-#endif
-TVM_DLL float expf(float);
-#ifdef __cplusplus
-extern "C"
-#endif
-TVM_DLL float expf(float);
-#ifdef __cplusplus
-extern "C"
-#endif
-TVM_DLL float expf(float);
-#ifdef __cplusplus
-extern "C"
-#endif
-TVM_DLL float expf(float);
-#ifdef __cplusplus
-extern "C"
-#endif
-TVM_DLL float expf(float);
-#ifdef __cplusplus
-extern "C"
-#endif
+// ============ 运行时上下文 ============
+
+typedef struct {
+  int32_t current_indegree; // 当前剩余依赖数（动态）
+                            // int32_t status;         // 暂不使用
+} RuntimeState;
+
+typedef struct {
+  // 静态数据
+  int total_ops;
+
+  // 动态状态
+  RuntimeState *states;
+  SafeQueue ready_queue;
+  SafeQueue complete_queue;
+
+  // 工作空间
+  uint8_t *cws;
+  uint8_t *ws;
+  SchedulableEntity *entities;
+
+  // 控制
+  int num_workers;
+  volatile int completed_ops;
+  volatile int error;
+
+  // 同步
+  pthread_mutex_t indegree_lock; // 保护入度更新
+} RuntimeContext;
+
+typedef struct {
+  RuntimeContext *ctx;
+  int worker_id;
+} WorkerArg;
+
+// ============ Worker 线程 ============
+
+static void *worker_loop(void *arg) {
+  WorkerArg *wa = (WorkerArg *)arg;
+  RuntimeContext *ctx = wa->ctx;
+
+  while (1) {
+    // A. 从 Ready Queue 获取任务
+    int32_t op_id = queue_pop(&ctx->ready_queue);
+
+    // B. 终止信号检测
+    if (op_id < 0) {
+      break;
+    }
+
+    // C. 执行算子（直接从实体调用 kernel）
+    SchedulableEntity *entity = &ctx->entities[op_id];
+    int ret =
+        entity->kernel(entity->inputs, entity->outputs, ctx->cws, ctx->ws);
+    if (ret != 0) {
+      ctx->error = ret;
+    }
+
+    // D. 上报完成
+    queue_push(&ctx->complete_queue, op_id);
+  }
+
+  return NULL;
+}
+
+// ============ Scheduler 线程 ============
+
+static void *scheduler_loop(void *arg) {
+  RuntimeContext *ctx = (RuntimeContext *)arg;
+
+  while (ctx->completed_ops < ctx->total_ops) {
+    // A. 从 Complete Queue 获取完成事件
+    int32_t finished_op_id = queue_pop(&ctx->complete_queue);
+
+    if (finished_op_id < 0)
+      break; // 终止信号
+
+    __atomic_fetch_add(&ctx->completed_ops, 1, __ATOMIC_SEQ_CST);
+
+    // B. 更新后继节点入度
+    int32_t num_succ = g_successor_counts[finished_op_id];
+    const int32_t *successors = g_successors[finished_op_id];
+
+    for (int i = 0; i < num_succ; i++) {
+      int32_t succ_id = successors[i];
+
+      // 原子递减入度
+      pthread_mutex_lock(&ctx->indegree_lock);
+      ctx->states[succ_id].current_indegree--;
+      int32_t new_indegree = ctx->states[succ_id].current_indegree;
+      pthread_mutex_unlock(&ctx->indegree_lock);
+
+      // C. 入度为 0，推入 Ready Queue
+      if (new_indegree == 0) {
+        queue_push(&ctx->ready_queue, succ_id);
+      }
+    }
+
+    // 错误检测
+    if (ctx->error != 0)
+      break;
+  }
+
+  // D. 发送终止信号给所有 Workers
+  for (int i = 0; i < ctx->num_workers; i++) {
+    queue_push(&ctx->ready_queue, -1); // -1 作为终止信号
+  }
+
+  return NULL;
+}
+
+// ============ 运行时初始化 ============
+
+static void init_runtime_context(RuntimeContext *ctx, uint8_t *cws, uint8_t *ws,
+                                 SchedulableEntity *entities, int num_workers) {
+  ctx->total_ops = OP_COUNT;
+  ctx->cws = cws;
+  ctx->ws = ws;
+  ctx->entities = entities;
+  ctx->num_workers = num_workers;
+  ctx->completed_ops = 0;
+  ctx->error = 0;
+
+  // 分配并初始化运行时状态
+  ctx->states = (RuntimeState *)malloc(sizeof(RuntimeState) * OP_COUNT);
+  for (int i = 0; i < OP_COUNT; i++) {
+    ctx->states[i].current_indegree = g_initial_indegrees[i];
+  }
+
+  // 初始化队列
+  queue_init(&ctx->ready_queue);
+  queue_init(&ctx->complete_queue);
+
+  // 初始化锁
+  pthread_mutex_init(&ctx->indegree_lock, NULL);
+
+  // 将初始入度为 0 的算子推入 Ready Queue
+  for (int i = 0; i < OP_COUNT; i++) {
+    if (ctx->states[i].current_indegree == 0) {
+      queue_push(&ctx->ready_queue, i);
+    }
+  }
+}
+
+static void cleanup_runtime_context(RuntimeContext *ctx) {
+  queue_destroy(&ctx->ready_queue);
+  queue_destroy(&ctx->complete_queue);
+  pthread_mutex_destroy(&ctx->indegree_lock);
+  free(ctx->states);
+}
+
+// ============ DAG 调度运行入口 ============
+
+static int tvmrt_run_dag(uint8_t *cws, uint8_t *ws,
+                         SchedulableEntity entities[]) {
+  int num_workers = 0;
+  const char *env = getenv("TVMRT_NUM_WORKERS");
+  if (!env)
+    env = getenv("OMP_NUM_THREADS");
+  num_workers = env ? atoi(env) : 3;
+  if (num_workers < 1)
+    num_workers = 1;
+
+  RuntimeContext ctx;
+  init_runtime_context(&ctx, cws, ws, entities, num_workers);
+
+  // 启动 Scheduler 线程
+  pthread_t sched_thread;
+  pthread_create(&sched_thread, NULL, scheduler_loop, &ctx);
+
+  // 启动 Worker 线程
+  pthread_t *workers = (pthread_t *)malloc(sizeof(pthread_t) * num_workers);
+  WorkerArg *worker_args = (WorkerArg *)malloc(sizeof(WorkerArg) * num_workers);
+
+  for (int i = 0; i < num_workers; i++) {
+    worker_args[i].ctx = &ctx;
+    worker_args[i].worker_id = i;
+    pthread_create(&workers[i], NULL, worker_loop, &worker_args[i]);
+  }
+
+  // 等待完成
+  pthread_join(sched_thread, NULL);
+  for (int i = 0; i < num_workers; i++) {
+    pthread_join(workers[i], NULL);
+  }
+
+  int error = ctx.error;
+
+  cleanup_runtime_context(&ctx);
+  free(workers);
+  free(worker_args);
+
+  return error;
+}
+
+// ============ 串行执行路径（兼容模式）============
+
+static int tvmrt_run_serial(uint8_t *cws, uint8_t *ws,
+                            SchedulableEntity entities[]) {
+  for (int i = 0; i < OP_COUNT; i++) {
+    SchedulableEntity *entity = &entities[i];
+    int ret = entity->kernel(entity->inputs, entity->outputs, cws, ws);
+    if (ret != 0)
+      return ret;
+  }
+  return 0;
+}
+
+// ============ 统一运行时入口 ============
+
+static int tvmrt_run(uint8_t *cws, uint8_t *ws, SchedulableEntity entities[]) {
+  const char *env = getenv("TVMRT_NUM_WORKERS");
+  int num_workers = env ? atoi(env) : 0; // 默认串行模式
+
+  // TVMRT_NUM_WORKERS=0 表示串行模式
+  if (num_workers == 0) {
+    return tvmrt_run_serial(cws, ws, entities);
+  } else {
+    return tvmrt_run_dag(cws, ws, entities);
+  }
+}
+
+
+// ============ 算子实现 ============
 TVM_DLL int32_t tvmgen_default_fused_concatenate(float* p0, float* p0_1, float* p1, float* p2, float* concatenate_ext, uint8_t* global_const_workspace_16_var, uint8_t* global_workspace_17_var) {
   for (int32_t j = 0; j < 409600; ++j) {
     concatenate_ext[j] = p0[j];
@@ -14347,217 +13773,993 @@ TVM_DLL int32_t tvmgen_default_fused_transpose_layout_transform(float* p0, float
 #ifdef __cplusplus
 extern "C"
 #endif
-TVM_DLL int32_t tvmgen_default___tvm_main__(float* images_buffer_var, float* output_buffer_var, uint8_t* global_const_workspace_0_var, uint8_t* global_workspace_1_var) {
 
-    uint8_t *cws = global_const_workspace_0_var;
-    uint8_t *ws = global_workspace_1_var;
 
-    // Buffer Definitions
+// ============ 模型入口函数 ============
 
-void* sid_59_let = (&(global_workspace_1_var[0]));
-void* sid_63_let = (&(global_workspace_1_var[8934400]));
-void* sid_52_let = (&(global_workspace_1_var[16384000]));
-void* sid_61_let = (&(global_workspace_1_var[12211200]));
-void* sid_58_let = (&(global_workspace_1_var[18841600]));
-void* sid_49_let = (&(global_workspace_1_var[20889600]));
-void* sid_48_let = (&(global_workspace_1_var[20070400]));
-void* sid_47_let = (&(global_workspace_1_var[20480000]));
-void* sid_46_let = (&(global_workspace_1_var[14745600]));
-void* sid_44_let = (&(global_workspace_1_var[19660800]));
-void* sid_43_let = (&(global_workspace_1_var[17203200]));
-void* sid_42_let = (&(global_workspace_1_var[18432000]));
-void* sid_40_let = (&(global_workspace_1_var[18841600]));
-void* sid_15_let = (&(global_workspace_1_var[8233088]));
-void* sid_39_let = (&(global_workspace_1_var[18227200]));
-void* sid_57_let = (&(global_workspace_1_var[18841600]));
-void* sid_37_let = (&(global_workspace_1_var[17203200]));
-void* sid_36_let = (&(global_workspace_1_var[18227200]));
-void* sid_56_let = (&(global_workspace_1_var[17203200]));
-void* sid_55_let = (&(global_workspace_1_var[18022400]));
-void* sid_33_let = (&(global_workspace_1_var[18022400]));
-void* sid_7_let = (&(global_workspace_1_var[16425024]));
-void* sid_31_let = (&(global_workspace_1_var[17612800]));
-void* sid_51_let = (&(global_workspace_1_var[14745600]));
-void* sid_16_let = (&(global_workspace_1_var[8233088]));
-void* sid_11_let = (&(global_workspace_1_var[3317888]));
-void* sid_9_let = (&(global_workspace_1_var[0]));
-void* sid_26_let = (&(global_workspace_1_var[17203200]));
-void* sid_62_let = (&(global_workspace_1_var[12211200]));
-void* sid_18_let = (&(global_workspace_1_var[9052288]));
-void* sid_50_let = (&(global_workspace_1_var[20889600]));
-void* sid_2_let = (&(global_workspace_1_var[6594624]));
-void* sid_10_let = (&(global_workspace_1_var[4915200]));
-void* sid_5_let = (&(global_workspace_1_var[14786624]));
-void* sid_53_let = (&(global_workspace_1_var[0]));
-void* sid_12_let = (&(global_workspace_1_var[4956288]));
-void* sid_41_let = (&(global_workspace_1_var[18636800]));
-void* sid_1_let = (&(global_workspace_1_var[18078800]));
-void* sid_3_let = (&(global_workspace_1_var[6594624]));
-void* sid_17_let = (&(global_workspace_1_var[9052288]));
-void* sid_8_let = (&(global_workspace_1_var[16425024]));
-void* sid_6_let = (&(global_workspace_1_var[13148224]));
-void* sid_38_let = (&(global_workspace_1_var[17817600]));
-void* sid_45_let = (&(global_workspace_1_var[0]));
-void* sid_20_let = (&(global_workspace_1_var[13107200]));
-void* sid_25_let = (&(global_workspace_1_var[17203200]));
-void* sid_32_let = (&(global_workspace_1_var[17203200]));
-void* sid_19_let = (&(global_workspace_1_var[0]));
-void* sid_35_let = (&(global_workspace_1_var[18227200]));
-void* sid_4_let = (&(global_workspace_1_var[9871424]));
-void* sid_27_let = (&(global_workspace_1_var[17612800]));
-void* sid_75_let = (&(global_workspace_1_var[11801600]));
-void* sid_29_let = (&(global_workspace_1_var[14745600]));
-void* sid_21_let = (&(global_workspace_1_var[14745600]));
-void* sid_22_let = (&(global_workspace_1_var[15564800]));
-void* sid_23_let = (&(global_workspace_1_var[16793600]));
-void* sid_60_let = (&(global_workspace_1_var[10572800]));
-void* sid_54_let = (&(global_workspace_1_var[4915200]));
-void* sid_14_let = (&(global_workspace_1_var[6594688]));
-void* sid_13_let = (&(global_workspace_1_var[7413888]));
-void* sid_24_let = (&(global_workspace_1_var[16384000]));
-void* sid_34_let = (&(global_workspace_1_var[17817600]));
-void* sid_30_let = (&(global_workspace_1_var[16384000]));
-void* sid_28_let = (&(global_workspace_1_var[17612800]));
-void* sid_64_let = (&(global_workspace_1_var[2151680]));
-void* sid_96_let = (&(global_workspace_1_var[20480000]));
-void* sid_65_let = (&(global_workspace_1_var[6886400]));
-void* sid_66_let = (&(global_workspace_1_var[4838400]));
-void* sid_67_let = (&(global_workspace_1_var[20070400]));
-void* sid_68_let = (&(global_workspace_1_var[10572800]));
-void* sid_69_let = (&(global_workspace_1_var[11801600]));
-void* sid_70_let = (&(global_workspace_1_var[20480000]));
-void* sid_71_let = (&(global_workspace_1_var[20070400]));
-void* sid_72_let = (&(global_workspace_1_var[20889600]));
-void* sid_73_let = (&(global_workspace_1_var[20889600]));
-void* sid_74_let = (&(global_workspace_1_var[10572800]));
-void* sid_76_let = (&(global_workspace_1_var[20070400]));
-void* sid_77_let = (&(global_workspace_1_var[20480000]));
-void* sid_78_let = (&(global_workspace_1_var[20070400]));
-void* sid_79_let = (&(global_workspace_1_var[13185280]));
-void* sid_80_let = (&(global_workspace_1_var[13185280]));
-void* sid_81_let = (&(global_workspace_1_var[12620800]));
-void* sid_82_let = (&(global_workspace_1_var[20480000]));
-void* sid_83_let = (&(global_workspace_1_var[10572800]));
-void* sid_84_let = (&(global_workspace_1_var[20480000]));
-void* sid_86_let = (&(global_workspace_1_var[20889600]));
-void* sid_85_let = (&(global_workspace_1_var[21094400]));
-void* sid_87_let = (&(global_workspace_1_var[21299200]));
-void* sid_88_let = (&(global_workspace_1_var[21299200]));
-void* sid_89_let = (&(global_workspace_1_var[10572800]));
-void* sid_90_let = (&(global_workspace_1_var[20480000]));
-void* sid_102_let = (&(global_workspace_1_var[13977600]));
-void* sid_91_let = (&(global_workspace_1_var[21013504]));
-void* sid_92_let = (&(global_workspace_1_var[21013504]));
-void* sid_93_let = (&(global_workspace_1_var[20889600]));
-void* sid_94_let = (&(global_workspace_1_var[20634880]));
-void* sid_100_let = (&(global_workspace_1_var[9676800]));
-void* sid_95_let = (&(global_workspace_1_var[20634880]));
-void* sid_98_let = (&(global_workspace_1_var[4838400]));
-void* sid_97_let = (&(global_workspace_1_var[9676800]));
-void* sid_99_let = (&(global_workspace_1_var[7526400]));
-void* sid_101_let = (&(global_workspace_1_var[11827200]));
+#ifdef __cplusplus
+extern "C"
+#endif
+TVM_DLL int32_t tvmgen_default___tvm_main__(
+    float* images_buffer_var,
+    float* output_buffer_var,
+    uint8_t* global_const_workspace_0_var,
+    uint8_t* global_workspace_1_var) {
 
-    // Operator Arguments Initialization
-op_args_t op_args[OP_COUNT] = {
-  {.inputs = { images_buffer_var, 0, 0, 0, 0, 0 }, .outputs = { sid_1_let, 0 }, .input_count = 1, .output_count = 1}, // [0] tvmgen_default_fused_layout_transform
-  {.inputs = { sid_1_let, 0, 0, 0, 0, 0 }, .outputs = { sid_2_let, 0 }, .input_count = 1, .output_count = 1}, // [1] tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply
-  {.inputs = { sid_2_let, 0, 0, 0, 0, 0 }, .outputs = { sid_3_let, 0 }, .input_count = 1, .output_count = 1}, // [2] tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_1
-  {.inputs = { sid_3_let, 0, 0, 0, 0, 0 }, .outputs = { sid_4_let, 0 }, .input_count = 1, .output_count = 1}, // [3] tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_2
-  {.inputs = { sid_4_let, 0, 0, 0, 0, 0 }, .outputs = { sid_5_let, sid_6_let }, .input_count = 1, .output_count = 2}, // [4] tvmgen_default_fused_split
-  {.inputs = { sid_6_let, 0, 0, 0, 0, 0 }, .outputs = { sid_7_let, 0 }, .input_count = 1, .output_count = 1}, // [5] tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_3
-  {.inputs = { sid_7_let, sid_6_let, 0, 0, 0, 0 }, .outputs = { sid_8_let, 0 }, .input_count = 2, .output_count = 1}, // [6] tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_add
-  {.inputs = { sid_5_let, sid_6_let, sid_6_let, sid_8_let, 0, 0 }, .outputs = { sid_9_let, 0 }, .input_count = 4, .output_count = 1}, // [7] tvmgen_default_fused_concatenate
-  {.inputs = { sid_9_let, 0, 0, 0, 0, 0 }, .outputs = { sid_10_let, 0 }, .input_count = 1, .output_count = 1}, // [8] tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_4
-  {.inputs = { sid_10_let, 0, 0, 0, 0, 0 }, .outputs = { sid_11_let, 0 }, .input_count = 1, .output_count = 1}, // [9] tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_5
-  {.inputs = { sid_11_let, 0, 0, 0, 0, 0 }, .outputs = { sid_12_let, 0 }, .input_count = 1, .output_count = 1}, // [10] tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_6
-  {.inputs = { sid_12_let, 0, 0, 0, 0, 0 }, .outputs = { sid_13_let, sid_14_let }, .input_count = 1, .output_count = 2}, // [11] tvmgen_default_fused_split_1
-  {.inputs = { sid_14_let, 0, 0, 0, 0, 0 }, .outputs = { sid_15_let, 0 }, .input_count = 1, .output_count = 1}, // [12] tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_7
-  {.inputs = { sid_15_let, sid_14_let, 0, 0, 0, 0 }, .outputs = { sid_16_let, 0 }, .input_count = 2, .output_count = 1}, // [13] tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_add_1
-  {.inputs = { sid_16_let, 0, 0, 0, 0, 0 }, .outputs = { sid_17_let, 0 }, .input_count = 1, .output_count = 1}, // [14] tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_8
-  {.inputs = { sid_17_let, sid_16_let, 0, 0, 0, 0 }, .outputs = { sid_18_let, 0 }, .input_count = 2, .output_count = 1}, // [15] tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_add_2
-  {.inputs = { sid_13_let, sid_14_let, sid_14_let, sid_16_let, sid_18_let, 0 }, .outputs = { sid_19_let, 0 }, .input_count = 5, .output_count = 1}, // [16] tvmgen_default_fused_concatenate_1
-  {.inputs = { sid_19_let, 0, 0, 0, 0, 0 }, .outputs = { sid_20_let, 0 }, .input_count = 1, .output_count = 1}, // [17] tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_9
-  {.inputs = { sid_20_let, 0, 0, 0, 0, 0 }, .outputs = { sid_21_let, 0 }, .input_count = 1, .output_count = 1}, // [18] tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_10
-  {.inputs = { sid_21_let, 0, 0, 0, 0, 0 }, .outputs = { sid_22_let, 0 }, .input_count = 1, .output_count = 1}, // [19] tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_11
-  {.inputs = { sid_22_let, 0, 0, 0, 0, 0 }, .outputs = { sid_23_let, sid_24_let }, .input_count = 1, .output_count = 2}, // [20] tvmgen_default_fused_split_2
-  {.inputs = { sid_24_let, 0, 0, 0, 0, 0 }, .outputs = { sid_25_let, 0 }, .input_count = 1, .output_count = 1}, // [21] tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_12
-  {.inputs = { sid_25_let, sid_24_let, 0, 0, 0, 0 }, .outputs = { sid_26_let, 0 }, .input_count = 2, .output_count = 1}, // [22] tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_add_3
-  {.inputs = { sid_26_let, 0, 0, 0, 0, 0 }, .outputs = { sid_27_let, 0 }, .input_count = 1, .output_count = 1}, // [23] tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_13
-  {.inputs = { sid_27_let, sid_26_let, 0, 0, 0, 0 }, .outputs = { sid_28_let, 0 }, .input_count = 2, .output_count = 1}, // [24] tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_add_4
-  {.inputs = { sid_23_let, sid_24_let, sid_24_let, sid_26_let, sid_28_let, 0 }, .outputs = { sid_29_let, 0 }, .input_count = 5, .output_count = 1}, // [25] tvmgen_default_fused_concatenate_2
-  {.inputs = { sid_29_let, 0, 0, 0, 0, 0 }, .outputs = { sid_30_let, 0 }, .input_count = 1, .output_count = 1}, // [26] tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_14
-  {.inputs = { sid_30_let, 0, 0, 0, 0, 0 }, .outputs = { sid_31_let, 0 }, .input_count = 1, .output_count = 1}, // [27] tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_15
-  {.inputs = { sid_31_let, 0, 0, 0, 0, 0 }, .outputs = { sid_32_let, 0 }, .input_count = 1, .output_count = 1}, // [28] tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_16
-  {.inputs = { sid_32_let, 0, 0, 0, 0, 0 }, .outputs = { sid_33_let, sid_34_let }, .input_count = 1, .output_count = 2}, // [29] tvmgen_default_fused_split_3
-  {.inputs = { sid_34_let, 0, 0, 0, 0, 0 }, .outputs = { sid_35_let, 0 }, .input_count = 1, .output_count = 1}, // [30] tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_17
-  {.inputs = { sid_35_let, sid_34_let, 0, 0, 0, 0 }, .outputs = { sid_36_let, 0 }, .input_count = 2, .output_count = 1}, // [31] tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_add_5
-  {.inputs = { sid_33_let, sid_34_let, sid_34_let, sid_36_let, 0, 0 }, .outputs = { sid_37_let, 0 }, .input_count = 4, .output_count = 1}, // [32] tvmgen_default_fused_concatenate_3
-  {.inputs = { sid_37_let, 0, 0, 0, 0, 0 }, .outputs = { sid_38_let, 0 }, .input_count = 1, .output_count = 1}, // [33] tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_18
-  {.inputs = { sid_38_let, 0, 0, 0, 0, 0 }, .outputs = { sid_39_let, 0 }, .input_count = 1, .output_count = 1}, // [34] tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_19
-  {.inputs = { sid_39_let, 0, 0, 0, 0, 0 }, .outputs = { sid_40_let, 0 }, .input_count = 1, .output_count = 1}, // [35] tvmgen_default_fused_nn_max_pool2d
-  {.inputs = { sid_40_let, 0, 0, 0, 0, 0 }, .outputs = { sid_41_let, 0 }, .input_count = 1, .output_count = 1}, // [36] tvmgen_default_fused_nn_max_pool2d_1
-  {.inputs = { sid_41_let, 0, 0, 0, 0, 0 }, .outputs = { sid_42_let, 0 }, .input_count = 1, .output_count = 1}, // [37] tvmgen_default_fused_nn_max_pool2d_2
-  {.inputs = { sid_39_let, sid_40_let, sid_41_let, sid_42_let, 0, 0 }, .outputs = { sid_43_let, 0 }, .input_count = 4, .output_count = 1}, // [38] tvmgen_default_fused_concatenate_4
-  {.inputs = { sid_43_let, 0, 0, 0, 0, 0 }, .outputs = { sid_44_let, 0 }, .input_count = 1, .output_count = 1}, // [39] tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_20
-  {.inputs = { sid_44_let, sid_30_let, 0, 0, 0, 0 }, .outputs = { sid_45_let, 0 }, .input_count = 2, .output_count = 1}, // [40] tvmgen_default_fused_layout_transform_image_resize2d_layout_transform_concatenate_layout_transf_1bf4794317454c42_
-  {.inputs = { sid_45_let, 0, 0, 0, 0, 0 }, .outputs = { sid_46_let, 0 }, .input_count = 1, .output_count = 1}, // [41] tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_21
-  {.inputs = { sid_46_let, 0, 0, 0, 0, 0 }, .outputs = { sid_47_let, sid_48_let }, .input_count = 1, .output_count = 2}, // [42] tvmgen_default_fused_split_4
-  {.inputs = { sid_48_let, 0, 0, 0, 0, 0 }, .outputs = { sid_49_let, 0 }, .input_count = 1, .output_count = 1}, // [43] tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_22
-  {.inputs = { sid_49_let, 0, 0, 0, 0, 0 }, .outputs = { sid_50_let, 0 }, .input_count = 1, .output_count = 1}, // [44] tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_23
-  {.inputs = { sid_47_let, sid_48_let, sid_48_let, sid_50_let, 0, 0 }, .outputs = { sid_51_let, 0 }, .input_count = 4, .output_count = 1}, // [45] tvmgen_default_fused_concatenate_5
-  {.inputs = { sid_51_let, 0, 0, 0, 0, 0 }, .outputs = { sid_52_let, 0 }, .input_count = 1, .output_count = 1}, // [46] tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_24
-  {.inputs = { sid_52_let, sid_20_let, 0, 0, 0, 0 }, .outputs = { sid_53_let, 0 }, .input_count = 2, .output_count = 1}, // [47] tvmgen_default_fused_layout_transform_image_resize2d_layout_transform_concatenate_layout_transf_1bf4794317454c42__1
-  {.inputs = { sid_53_let, 0, 0, 0, 0, 0 }, .outputs = { sid_54_let, 0 }, .input_count = 1, .output_count = 1}, // [48] tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_25
-  {.inputs = { sid_54_let, 0, 0, 0, 0, 0 }, .outputs = { sid_55_let, sid_56_let }, .input_count = 1, .output_count = 2}, // [49] tvmgen_default_fused_split_5
-  {.inputs = { sid_56_let, 0, 0, 0, 0, 0 }, .outputs = { sid_57_let, 0 }, .input_count = 1, .output_count = 1}, // [50] tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_26
-  {.inputs = { sid_57_let, 0, 0, 0, 0, 0 }, .outputs = { sid_58_let, 0 }, .input_count = 1, .output_count = 1}, // [51] tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_27
-  {.inputs = { sid_55_let, sid_56_let, sid_56_let, sid_58_let, 0, 0 }, .outputs = { sid_59_let, 0 }, .input_count = 4, .output_count = 1}, // [52] tvmgen_default_fused_concatenate_6
-  {.inputs = { sid_59_let, 0, 0, 0, 0, 0 }, .outputs = { sid_60_let, 0 }, .input_count = 1, .output_count = 1}, // [53] tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_28
-  {.inputs = { sid_60_let, 0, 0, 0, 0, 0 }, .outputs = { sid_61_let, 0 }, .input_count = 1, .output_count = 1}, // [54] tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_29
-  {.inputs = { sid_61_let, 0, 0, 0, 0, 0 }, .outputs = { sid_62_let, 0 }, .input_count = 1, .output_count = 1}, // [55] tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_30
-  {.inputs = { sid_62_let, 0, 0, 0, 0, 0 }, .outputs = { sid_63_let, 0 }, .input_count = 1, .output_count = 1}, // [56] tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add
-  {.inputs = { sid_60_let, 0, 0, 0, 0, 0 }, .outputs = { sid_64_let, 0 }, .input_count = 1, .output_count = 1}, // [57] tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_31
-  {.inputs = { sid_64_let, 0, 0, 0, 0, 0 }, .outputs = { sid_65_let, 0 }, .input_count = 1, .output_count = 1}, // [58] tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_32
-  {.inputs = { sid_65_let, 0, 0, 0, 0, 0 }, .outputs = { sid_66_let, 0 }, .input_count = 1, .output_count = 1}, // [59] tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_1
-  {.inputs = { sid_60_let, 0, 0, 0, 0, 0 }, .outputs = { sid_67_let, 0 }, .input_count = 1, .output_count = 1}, // [60] tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_33
-  {.inputs = { sid_67_let, sid_52_let, 0, 0, 0, 0 }, .outputs = { sid_68_let, 0 }, .input_count = 2, .output_count = 1}, // [61] tvmgen_default_fused_concatenate_7
-  {.inputs = { sid_68_let, 0, 0, 0, 0, 0 }, .outputs = { sid_69_let, 0 }, .input_count = 1, .output_count = 1}, // [62] tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_34
-  {.inputs = { sid_69_let, 0, 0, 0, 0, 0 }, .outputs = { sid_70_let, sid_71_let }, .input_count = 1, .output_count = 2}, // [63] tvmgen_default_fused_split_6
-  {.inputs = { sid_71_let, 0, 0, 0, 0, 0 }, .outputs = { sid_72_let, 0 }, .input_count = 1, .output_count = 1}, // [64] tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_35
-  {.inputs = { sid_72_let, 0, 0, 0, 0, 0 }, .outputs = { sid_73_let, 0 }, .input_count = 1, .output_count = 1}, // [65] tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_36
-  {.inputs = { sid_70_let, sid_71_let, sid_71_let, sid_73_let, 0, 0 }, .outputs = { sid_74_let, 0 }, .input_count = 4, .output_count = 1}, // [66] tvmgen_default_fused_concatenate_8
-  {.inputs = { sid_74_let, 0, 0, 0, 0, 0 }, .outputs = { sid_75_let, 0 }, .input_count = 1, .output_count = 1}, // [67] tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_37
-  {.inputs = { sid_75_let, 0, 0, 0, 0, 0 }, .outputs = { sid_76_let, 0 }, .input_count = 1, .output_count = 1}, // [68] tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_38
-  {.inputs = { sid_76_let, 0, 0, 0, 0, 0 }, .outputs = { sid_77_let, 0 }, .input_count = 1, .output_count = 1}, // [69] tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_39
-  {.inputs = { sid_77_let, 0, 0, 0, 0, 0 }, .outputs = { sid_78_let, 0 }, .input_count = 1, .output_count = 1}, // [70] tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_2
-  {.inputs = { sid_75_let, 0, 0, 0, 0, 0 }, .outputs = { sid_79_let, 0 }, .input_count = 1, .output_count = 1}, // [71] tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_40
-  {.inputs = { sid_79_let, 0, 0, 0, 0, 0 }, .outputs = { sid_80_let, 0 }, .input_count = 1, .output_count = 1}, // [72] tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_41
-  {.inputs = { sid_80_let, 0, 0, 0, 0, 0 }, .outputs = { sid_81_let, 0 }, .input_count = 1, .output_count = 1}, // [73] tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_3
-  {.inputs = { sid_75_let, 0, 0, 0, 0, 0 }, .outputs = { sid_82_let, 0 }, .input_count = 1, .output_count = 1}, // [74] tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_42
-  {.inputs = { sid_82_let, sid_44_let, 0, 0, 0, 0 }, .outputs = { sid_83_let, 0 }, .input_count = 2, .output_count = 1}, // [75] tvmgen_default_fused_concatenate_9
-  {.inputs = { sid_83_let, 0, 0, 0, 0, 0 }, .outputs = { sid_84_let, 0 }, .input_count = 1, .output_count = 1}, // [76] tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_43
-  {.inputs = { sid_84_let, 0, 0, 0, 0, 0 }, .outputs = { sid_85_let, sid_86_let }, .input_count = 1, .output_count = 2}, // [77] tvmgen_default_fused_split_7
-  {.inputs = { sid_86_let, 0, 0, 0, 0, 0 }, .outputs = { sid_87_let, 0 }, .input_count = 1, .output_count = 1}, // [78] tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_44
-  {.inputs = { sid_87_let, 0, 0, 0, 0, 0 }, .outputs = { sid_88_let, 0 }, .input_count = 1, .output_count = 1}, // [79] tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_45
-  {.inputs = { sid_85_let, sid_86_let, sid_86_let, sid_88_let, 0, 0 }, .outputs = { sid_89_let, 0 }, .input_count = 4, .output_count = 1}, // [80] tvmgen_default_fused_concatenate_10
-  {.inputs = { sid_89_let, 0, 0, 0, 0, 0 }, .outputs = { sid_90_let, 0 }, .input_count = 1, .output_count = 1}, // [81] tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_46
-  {.inputs = { sid_90_let, 0, 0, 0, 0, 0 }, .outputs = { sid_91_let, 0 }, .input_count = 1, .output_count = 1}, // [82] tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_47
-  {.inputs = { sid_91_let, 0, 0, 0, 0, 0 }, .outputs = { sid_92_let, 0 }, .input_count = 1, .output_count = 1}, // [83] tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_48
-  {.inputs = { sid_92_let, 0, 0, 0, 0, 0 }, .outputs = { sid_93_let, 0 }, .input_count = 1, .output_count = 1}, // [84] tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_4
-  {.inputs = { sid_90_let, 0, 0, 0, 0, 0 }, .outputs = { sid_94_let, 0 }, .input_count = 1, .output_count = 1}, // [85] tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_49
-  {.inputs = { sid_94_let, 0, 0, 0, 0, 0 }, .outputs = { sid_95_let, 0 }, .input_count = 1, .output_count = 1}, // [86] tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_50
-  {.inputs = { sid_95_let, 0, 0, 0, 0, 0 }, .outputs = { sid_96_let, 0 }, .input_count = 1, .output_count = 1}, // [87] tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_5
-  {.inputs = { sid_63_let, sid_66_let, sid_78_let, sid_81_let, sid_93_let, sid_96_let }, .outputs = { sid_97_let, sid_98_let }, .input_count = 6, .output_count = 2}, // [88] tvmgen_default_fused_concatenate_layout_transform_reshape_concatenate_layout_transform_reshape__7c5ad37d2665c07f_
-  {.inputs = { sid_97_let, sid_98_let, 0, 0, 0, 0 }, .outputs = { sid_99_let, 0 }, .input_count = 2, .output_count = 1}, // [89] tvmgen_default_fused_reshape_transpose
-  {.inputs = { sid_99_let, 0, 0, 0, 0, 0 }, .outputs = { sid_100_let, 0 }, .input_count = 1, .output_count = 1}, // [90] tvmgen_default_fused_nn_softmax
-  {.inputs = { sid_100_let, 0, 0, 0, 0, 0 }, .outputs = { sid_101_let, 0 }, .input_count = 1, .output_count = 1}, // [91] tvmgen_default_fused_transpose_layout_transform
-  {.inputs = { sid_101_let, 0, 0, 0, 0, 0 }, .outputs = { sid_102_let, 0 }, .input_count = 1, .output_count = 1}, // [92] tvmgen_default_fused_nn_contrib_conv2d_NCHWc
-  {.inputs = { sid_102_let, sid_97_let, sid_98_let, 0, 0, 0 }, .outputs = { output_buffer_var, 0 }, .input_count = 3, .output_count = 1}, // [93] tvmgen_default_fused_layout_transform_reshape_strided_slice_subtract_strided_slice_add_add_divi_e52109f6a309057f_
-};
+    // ============================================================
+    // SchedulableEntity 实体初始化
+    // ============================================================
+    // workspace 偏移量变量
+    void* sid_1_let = (&(global_workspace_1_var[18078800]));
+    void* sid_2_let = (&(global_workspace_1_var[6594624]));
+    void* sid_3_let = (&(global_workspace_1_var[6594624]));
+    void* sid_4_let = (&(global_workspace_1_var[9871424]));
+    void* sid_5_let = (&(global_workspace_1_var[14786624]));
+    void* sid_6_let = (&(global_workspace_1_var[13148224]));
+    void* sid_7_let = (&(global_workspace_1_var[16425024]));
+    void* sid_8_let = (&(global_workspace_1_var[16425024]));
+    void* sid_9_let = (&(global_workspace_1_var[0]));
+    void* sid_10_let = (&(global_workspace_1_var[4915200]));
+    void* sid_11_let = (&(global_workspace_1_var[3317888]));
+    void* sid_12_let = (&(global_workspace_1_var[4956288]));
+    void* sid_13_let = (&(global_workspace_1_var[7413888]));
+    void* sid_14_let = (&(global_workspace_1_var[6594688]));
+    void* sid_15_let = (&(global_workspace_1_var[8233088]));
+    void* sid_16_let = (&(global_workspace_1_var[8233088]));
+    void* sid_17_let = (&(global_workspace_1_var[9052288]));
+    void* sid_18_let = (&(global_workspace_1_var[9052288]));
+    void* sid_19_let = (&(global_workspace_1_var[0]));
+    void* sid_20_let = (&(global_workspace_1_var[13107200]));
+    void* sid_21_let = (&(global_workspace_1_var[14745600]));
+    void* sid_22_let = (&(global_workspace_1_var[15564800]));
+    void* sid_23_let = (&(global_workspace_1_var[16793600]));
+    void* sid_24_let = (&(global_workspace_1_var[16384000]));
+    void* sid_25_let = (&(global_workspace_1_var[17203200]));
+    void* sid_26_let = (&(global_workspace_1_var[17203200]));
+    void* sid_27_let = (&(global_workspace_1_var[17612800]));
+    void* sid_28_let = (&(global_workspace_1_var[17612800]));
+    void* sid_29_let = (&(global_workspace_1_var[14745600]));
+    void* sid_30_let = (&(global_workspace_1_var[16384000]));
+    void* sid_31_let = (&(global_workspace_1_var[17612800]));
+    void* sid_32_let = (&(global_workspace_1_var[17203200]));
+    void* sid_33_let = (&(global_workspace_1_var[18022400]));
+    void* sid_34_let = (&(global_workspace_1_var[17817600]));
+    void* sid_35_let = (&(global_workspace_1_var[18227200]));
+    void* sid_36_let = (&(global_workspace_1_var[18227200]));
+    void* sid_37_let = (&(global_workspace_1_var[17203200]));
+    void* sid_38_let = (&(global_workspace_1_var[17817600]));
+    void* sid_39_let = (&(global_workspace_1_var[18227200]));
+    void* sid_40_let = (&(global_workspace_1_var[18841600]));
+    void* sid_41_let = (&(global_workspace_1_var[18636800]));
+    void* sid_42_let = (&(global_workspace_1_var[18432000]));
+    void* sid_43_let = (&(global_workspace_1_var[17203200]));
+    void* sid_44_let = (&(global_workspace_1_var[19660800]));
+    void* sid_45_let = (&(global_workspace_1_var[0]));
+    void* sid_46_let = (&(global_workspace_1_var[14745600]));
+    void* sid_47_let = (&(global_workspace_1_var[20480000]));
+    void* sid_48_let = (&(global_workspace_1_var[20070400]));
+    void* sid_49_let = (&(global_workspace_1_var[20889600]));
+    void* sid_50_let = (&(global_workspace_1_var[20889600]));
+    void* sid_51_let = (&(global_workspace_1_var[14745600]));
+    void* sid_52_let = (&(global_workspace_1_var[16384000]));
+    void* sid_53_let = (&(global_workspace_1_var[0]));
+    void* sid_54_let = (&(global_workspace_1_var[4915200]));
+    void* sid_55_let = (&(global_workspace_1_var[18022400]));
+    void* sid_56_let = (&(global_workspace_1_var[17203200]));
+    void* sid_57_let = (&(global_workspace_1_var[18841600]));
+    void* sid_58_let = (&(global_workspace_1_var[18841600]));
+    void* sid_59_let = (&(global_workspace_1_var[0]));
+    void* sid_60_let = (&(global_workspace_1_var[10572800]));
+    void* sid_61_let = (&(global_workspace_1_var[12211200]));
+    void* sid_62_let = (&(global_workspace_1_var[12211200]));
+    void* sid_63_let = (&(global_workspace_1_var[8934400]));
+    void* sid_64_let = (&(global_workspace_1_var[2151680]));
+    void* sid_65_let = (&(global_workspace_1_var[6886400]));
+    void* sid_66_let = (&(global_workspace_1_var[4838400]));
+    void* sid_67_let = (&(global_workspace_1_var[20070400]));
+    void* sid_68_let = (&(global_workspace_1_var[10572800]));
+    void* sid_69_let = (&(global_workspace_1_var[11801600]));
+    void* sid_70_let = (&(global_workspace_1_var[20480000]));
+    void* sid_71_let = (&(global_workspace_1_var[20070400]));
+    void* sid_72_let = (&(global_workspace_1_var[20889600]));
+    void* sid_73_let = (&(global_workspace_1_var[20889600]));
+    void* sid_74_let = (&(global_workspace_1_var[10572800]));
+    void* sid_75_let = (&(global_workspace_1_var[11801600]));
+    void* sid_76_let = (&(global_workspace_1_var[20070400]));
+    void* sid_77_let = (&(global_workspace_1_var[20480000]));
+    void* sid_78_let = (&(global_workspace_1_var[20070400]));
+    void* sid_79_let = (&(global_workspace_1_var[13185280]));
+    void* sid_80_let = (&(global_workspace_1_var[13185280]));
+    void* sid_81_let = (&(global_workspace_1_var[12620800]));
+    void* sid_82_let = (&(global_workspace_1_var[20480000]));
+    void* sid_83_let = (&(global_workspace_1_var[10572800]));
+    void* sid_84_let = (&(global_workspace_1_var[20480000]));
+    void* sid_85_let = (&(global_workspace_1_var[21094400]));
+    void* sid_86_let = (&(global_workspace_1_var[20889600]));
+    void* sid_87_let = (&(global_workspace_1_var[21299200]));
+    void* sid_88_let = (&(global_workspace_1_var[21299200]));
+    void* sid_89_let = (&(global_workspace_1_var[10572800]));
+    void* sid_90_let = (&(global_workspace_1_var[20480000]));
+    void* sid_91_let = (&(global_workspace_1_var[21013504]));
+    void* sid_92_let = (&(global_workspace_1_var[21013504]));
+    void* sid_93_let = (&(global_workspace_1_var[20889600]));
+    void* sid_94_let = (&(global_workspace_1_var[20634880]));
+    void* sid_95_let = (&(global_workspace_1_var[20634880]));
+    void* sid_96_let = (&(global_workspace_1_var[20480000]));
+    void* sid_97_let = (&(global_workspace_1_var[9676800]));
+    void* sid_98_let = (&(global_workspace_1_var[4838400]));
+    void* sid_99_let = (&(global_workspace_1_var[7526400]));
+    void* sid_100_let = (&(global_workspace_1_var[9676800]));
+    void* sid_101_let = (&(global_workspace_1_var[11827200]));
+    void* sid_102_let = (&(global_workspace_1_var[13977600]));
+    // 可调度实体数组
+    SchedulableEntity g_entities[OP_COUNT] = {
+        { // [0] tvmgen_default_fused_layout_transform
+            .kernel = wrapped_tvmgen_default_fused_layout_transform,
+            .inputs = { images_buffer_var },
+            .outputs = { sid_1_let },
+            .input_count = 1,
+            .output_count = 1,
+            .config = { .device_type = 0, .priority = 0 },
+            .id = 0
+        },
+        { // [1] tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply
+            .kernel = wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply,
+            .inputs = { sid_1_let },
+            .outputs = { sid_2_let },
+            .input_count = 1,
+            .output_count = 1,
+            .config = { .device_type = 0, .priority = 0 },
+            .id = 1
+        },
+        { // [2] tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_1
+            .kernel = wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_1,
+            .inputs = { sid_2_let },
+            .outputs = { sid_3_let },
+            .input_count = 1,
+            .output_count = 1,
+            .config = { .device_type = 0, .priority = 0 },
+            .id = 2
+        },
+        { // [3] tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_2
+            .kernel = wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_2,
+            .inputs = { sid_3_let },
+            .outputs = { sid_4_let },
+            .input_count = 1,
+            .output_count = 1,
+            .config = { .device_type = 0, .priority = 0 },
+            .id = 3
+        },
+        { // [4] tvmgen_default_fused_split
+            .kernel = wrapped_tvmgen_default_fused_split,
+            .inputs = { sid_4_let },
+            .outputs = { sid_5_let, sid_6_let },
+            .input_count = 1,
+            .output_count = 2,
+            .config = { .device_type = 0, .priority = 0 },
+            .id = 4
+        },
+        { // [5] tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_3
+            .kernel = wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_3,
+            .inputs = { sid_6_let },
+            .outputs = { sid_7_let },
+            .input_count = 1,
+            .output_count = 1,
+            .config = { .device_type = 0, .priority = 0 },
+            .id = 5
+        },
+        { // [6] tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_add
+            .kernel = wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_add,
+            .inputs = { sid_7_let, sid_6_let },
+            .outputs = { sid_8_let },
+            .input_count = 2,
+            .output_count = 1,
+            .config = { .device_type = 0, .priority = 0 },
+            .id = 6
+        },
+        { // [7] tvmgen_default_fused_concatenate
+            .kernel = wrapped_tvmgen_default_fused_concatenate,
+            .inputs = { sid_5_let, sid_6_let, sid_6_let, sid_8_let },
+            .outputs = { sid_9_let },
+            .input_count = 4,
+            .output_count = 1,
+            .config = { .device_type = 0, .priority = 0 },
+            .id = 7
+        },
+        { // [8] tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_4
+            .kernel = wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_4,
+            .inputs = { sid_9_let },
+            .outputs = { sid_10_let },
+            .input_count = 1,
+            .output_count = 1,
+            .config = { .device_type = 0, .priority = 0 },
+            .id = 8
+        },
+        { // [9] tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_5
+            .kernel = wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_5,
+            .inputs = { sid_10_let },
+            .outputs = { sid_11_let },
+            .input_count = 1,
+            .output_count = 1,
+            .config = { .device_type = 0, .priority = 0 },
+            .id = 9
+        },
+        { // [10] tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_6
+            .kernel = wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_6,
+            .inputs = { sid_11_let },
+            .outputs = { sid_12_let },
+            .input_count = 1,
+            .output_count = 1,
+            .config = { .device_type = 0, .priority = 0 },
+            .id = 10
+        },
+        { // [11] tvmgen_default_fused_split_1
+            .kernel = wrapped_tvmgen_default_fused_split_1,
+            .inputs = { sid_12_let },
+            .outputs = { sid_13_let, sid_14_let },
+            .input_count = 1,
+            .output_count = 2,
+            .config = { .device_type = 0, .priority = 0 },
+            .id = 11
+        },
+        { // [12] tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_7
+            .kernel = wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_7,
+            .inputs = { sid_14_let },
+            .outputs = { sid_15_let },
+            .input_count = 1,
+            .output_count = 1,
+            .config = { .device_type = 0, .priority = 0 },
+            .id = 12
+        },
+        { // [13] tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_add_1
+            .kernel = wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_add_1,
+            .inputs = { sid_15_let, sid_14_let },
+            .outputs = { sid_16_let },
+            .input_count = 2,
+            .output_count = 1,
+            .config = { .device_type = 0, .priority = 0 },
+            .id = 13
+        },
+        { // [14] tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_8
+            .kernel = wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_8,
+            .inputs = { sid_16_let },
+            .outputs = { sid_17_let },
+            .input_count = 1,
+            .output_count = 1,
+            .config = { .device_type = 0, .priority = 0 },
+            .id = 14
+        },
+        { // [15] tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_add_2
+            .kernel = wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_add_2,
+            .inputs = { sid_17_let, sid_16_let },
+            .outputs = { sid_18_let },
+            .input_count = 2,
+            .output_count = 1,
+            .config = { .device_type = 0, .priority = 0 },
+            .id = 15
+        },
+        { // [16] tvmgen_default_fused_concatenate_1
+            .kernel = wrapped_tvmgen_default_fused_concatenate_1,
+            .inputs = { sid_13_let, sid_14_let, sid_14_let, sid_16_let, sid_18_let },
+            .outputs = { sid_19_let },
+            .input_count = 5,
+            .output_count = 1,
+            .config = { .device_type = 0, .priority = 0 },
+            .id = 16
+        },
+        { // [17] tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_9
+            .kernel = wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_9,
+            .inputs = { sid_19_let },
+            .outputs = { sid_20_let },
+            .input_count = 1,
+            .output_count = 1,
+            .config = { .device_type = 0, .priority = 0 },
+            .id = 17
+        },
+        { // [18] tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_10
+            .kernel = wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_10,
+            .inputs = { sid_20_let },
+            .outputs = { sid_21_let },
+            .input_count = 1,
+            .output_count = 1,
+            .config = { .device_type = 0, .priority = 0 },
+            .id = 18
+        },
+        { // [19] tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_11
+            .kernel = wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_11,
+            .inputs = { sid_21_let },
+            .outputs = { sid_22_let },
+            .input_count = 1,
+            .output_count = 1,
+            .config = { .device_type = 0, .priority = 0 },
+            .id = 19
+        },
+        { // [20] tvmgen_default_fused_split_2
+            .kernel = wrapped_tvmgen_default_fused_split_2,
+            .inputs = { sid_22_let },
+            .outputs = { sid_23_let, sid_24_let },
+            .input_count = 1,
+            .output_count = 2,
+            .config = { .device_type = 0, .priority = 0 },
+            .id = 20
+        },
+        { // [21] tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_12
+            .kernel = wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_12,
+            .inputs = { sid_24_let },
+            .outputs = { sid_25_let },
+            .input_count = 1,
+            .output_count = 1,
+            .config = { .device_type = 0, .priority = 0 },
+            .id = 21
+        },
+        { // [22] tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_add_3
+            .kernel = wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_add_3,
+            .inputs = { sid_25_let, sid_24_let },
+            .outputs = { sid_26_let },
+            .input_count = 2,
+            .output_count = 1,
+            .config = { .device_type = 0, .priority = 0 },
+            .id = 22
+        },
+        { // [23] tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_13
+            .kernel = wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_13,
+            .inputs = { sid_26_let },
+            .outputs = { sid_27_let },
+            .input_count = 1,
+            .output_count = 1,
+            .config = { .device_type = 0, .priority = 0 },
+            .id = 23
+        },
+        { // [24] tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_add_4
+            .kernel = wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_add_4,
+            .inputs = { sid_27_let, sid_26_let },
+            .outputs = { sid_28_let },
+            .input_count = 2,
+            .output_count = 1,
+            .config = { .device_type = 0, .priority = 0 },
+            .id = 24
+        },
+        { // [25] tvmgen_default_fused_concatenate_2
+            .kernel = wrapped_tvmgen_default_fused_concatenate_2,
+            .inputs = { sid_23_let, sid_24_let, sid_24_let, sid_26_let, sid_28_let },
+            .outputs = { sid_29_let },
+            .input_count = 5,
+            .output_count = 1,
+            .config = { .device_type = 0, .priority = 0 },
+            .id = 25
+        },
+        { // [26] tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_14
+            .kernel = wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_14,
+            .inputs = { sid_29_let },
+            .outputs = { sid_30_let },
+            .input_count = 1,
+            .output_count = 1,
+            .config = { .device_type = 0, .priority = 0 },
+            .id = 26
+        },
+        { // [27] tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_15
+            .kernel = wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_15,
+            .inputs = { sid_30_let },
+            .outputs = { sid_31_let },
+            .input_count = 1,
+            .output_count = 1,
+            .config = { .device_type = 0, .priority = 0 },
+            .id = 27
+        },
+        { // [28] tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_16
+            .kernel = wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_16,
+            .inputs = { sid_31_let },
+            .outputs = { sid_32_let },
+            .input_count = 1,
+            .output_count = 1,
+            .config = { .device_type = 0, .priority = 0 },
+            .id = 28
+        },
+        { // [29] tvmgen_default_fused_split_3
+            .kernel = wrapped_tvmgen_default_fused_split_3,
+            .inputs = { sid_32_let },
+            .outputs = { sid_33_let, sid_34_let },
+            .input_count = 1,
+            .output_count = 2,
+            .config = { .device_type = 0, .priority = 0 },
+            .id = 29
+        },
+        { // [30] tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_17
+            .kernel = wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_17,
+            .inputs = { sid_34_let },
+            .outputs = { sid_35_let },
+            .input_count = 1,
+            .output_count = 1,
+            .config = { .device_type = 0, .priority = 0 },
+            .id = 30
+        },
+        { // [31] tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_add_5
+            .kernel = wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_add_5,
+            .inputs = { sid_35_let, sid_34_let },
+            .outputs = { sid_36_let },
+            .input_count = 2,
+            .output_count = 1,
+            .config = { .device_type = 0, .priority = 0 },
+            .id = 31
+        },
+        { // [32] tvmgen_default_fused_concatenate_3
+            .kernel = wrapped_tvmgen_default_fused_concatenate_3,
+            .inputs = { sid_33_let, sid_34_let, sid_34_let, sid_36_let },
+            .outputs = { sid_37_let },
+            .input_count = 4,
+            .output_count = 1,
+            .config = { .device_type = 0, .priority = 0 },
+            .id = 32
+        },
+        { // [33] tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_18
+            .kernel = wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_18,
+            .inputs = { sid_37_let },
+            .outputs = { sid_38_let },
+            .input_count = 1,
+            .output_count = 1,
+            .config = { .device_type = 0, .priority = 0 },
+            .id = 33
+        },
+        { // [34] tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_19
+            .kernel = wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_19,
+            .inputs = { sid_38_let },
+            .outputs = { sid_39_let },
+            .input_count = 1,
+            .output_count = 1,
+            .config = { .device_type = 0, .priority = 0 },
+            .id = 34
+        },
+        { // [35] tvmgen_default_fused_nn_max_pool2d
+            .kernel = wrapped_tvmgen_default_fused_nn_max_pool2d,
+            .inputs = { sid_39_let },
+            .outputs = { sid_40_let },
+            .input_count = 1,
+            .output_count = 1,
+            .config = { .device_type = 0, .priority = 0 },
+            .id = 35
+        },
+        { // [36] tvmgen_default_fused_nn_max_pool2d_1
+            .kernel = wrapped_tvmgen_default_fused_nn_max_pool2d_1,
+            .inputs = { sid_40_let },
+            .outputs = { sid_41_let },
+            .input_count = 1,
+            .output_count = 1,
+            .config = { .device_type = 0, .priority = 0 },
+            .id = 36
+        },
+        { // [37] tvmgen_default_fused_nn_max_pool2d_2
+            .kernel = wrapped_tvmgen_default_fused_nn_max_pool2d_2,
+            .inputs = { sid_41_let },
+            .outputs = { sid_42_let },
+            .input_count = 1,
+            .output_count = 1,
+            .config = { .device_type = 0, .priority = 0 },
+            .id = 37
+        },
+        { // [38] tvmgen_default_fused_concatenate_4
+            .kernel = wrapped_tvmgen_default_fused_concatenate_4,
+            .inputs = { sid_39_let, sid_40_let, sid_41_let, sid_42_let },
+            .outputs = { sid_43_let },
+            .input_count = 4,
+            .output_count = 1,
+            .config = { .device_type = 0, .priority = 0 },
+            .id = 38
+        },
+        { // [39] tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_20
+            .kernel = wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_20,
+            .inputs = { sid_43_let },
+            .outputs = { sid_44_let },
+            .input_count = 1,
+            .output_count = 1,
+            .config = { .device_type = 0, .priority = 0 },
+            .id = 39
+        },
+        { // [40] tvmgen_default_fused_layout_transform_image_resize2d_layout_transform_concatenate_layout_transf_1bf4794317454c42_
+            .kernel = wrapped_tvmgen_default_fused_layout_transform_image_resize2d_layout_transform_concatenate_layout_transf_1bf4794317454c42_,
+            .inputs = { sid_44_let, sid_30_let },
+            .outputs = { sid_45_let },
+            .input_count = 2,
+            .output_count = 1,
+            .config = { .device_type = 0, .priority = 0 },
+            .id = 40
+        },
+        { // [41] tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_21
+            .kernel = wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_21,
+            .inputs = { sid_45_let },
+            .outputs = { sid_46_let },
+            .input_count = 1,
+            .output_count = 1,
+            .config = { .device_type = 0, .priority = 0 },
+            .id = 41
+        },
+        { // [42] tvmgen_default_fused_split_4
+            .kernel = wrapped_tvmgen_default_fused_split_4,
+            .inputs = { sid_46_let },
+            .outputs = { sid_47_let, sid_48_let },
+            .input_count = 1,
+            .output_count = 2,
+            .config = { .device_type = 0, .priority = 0 },
+            .id = 42
+        },
+        { // [43] tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_22
+            .kernel = wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_22,
+            .inputs = { sid_48_let },
+            .outputs = { sid_49_let },
+            .input_count = 1,
+            .output_count = 1,
+            .config = { .device_type = 0, .priority = 0 },
+            .id = 43
+        },
+        { // [44] tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_23
+            .kernel = wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_23,
+            .inputs = { sid_49_let },
+            .outputs = { sid_50_let },
+            .input_count = 1,
+            .output_count = 1,
+            .config = { .device_type = 0, .priority = 0 },
+            .id = 44
+        },
+        { // [45] tvmgen_default_fused_concatenate_5
+            .kernel = wrapped_tvmgen_default_fused_concatenate_5,
+            .inputs = { sid_47_let, sid_48_let, sid_48_let, sid_50_let },
+            .outputs = { sid_51_let },
+            .input_count = 4,
+            .output_count = 1,
+            .config = { .device_type = 0, .priority = 0 },
+            .id = 45
+        },
+        { // [46] tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_24
+            .kernel = wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_24,
+            .inputs = { sid_51_let },
+            .outputs = { sid_52_let },
+            .input_count = 1,
+            .output_count = 1,
+            .config = { .device_type = 0, .priority = 0 },
+            .id = 46
+        },
+        { // [47] tvmgen_default_fused_layout_transform_image_resize2d_layout_transform_concatenate_layout_transf_1bf4794317454c42__1
+            .kernel = wrapped_tvmgen_default_fused_layout_transform_image_resize2d_layout_transform_concatenate_layout_transf_1bf4794317454c42__1,
+            .inputs = { sid_52_let, sid_20_let },
+            .outputs = { sid_53_let },
+            .input_count = 2,
+            .output_count = 1,
+            .config = { .device_type = 0, .priority = 0 },
+            .id = 47
+        },
+        { // [48] tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_25
+            .kernel = wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_25,
+            .inputs = { sid_53_let },
+            .outputs = { sid_54_let },
+            .input_count = 1,
+            .output_count = 1,
+            .config = { .device_type = 0, .priority = 0 },
+            .id = 48
+        },
+        { // [49] tvmgen_default_fused_split_5
+            .kernel = wrapped_tvmgen_default_fused_split_5,
+            .inputs = { sid_54_let },
+            .outputs = { sid_55_let, sid_56_let },
+            .input_count = 1,
+            .output_count = 2,
+            .config = { .device_type = 0, .priority = 0 },
+            .id = 49
+        },
+        { // [50] tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_26
+            .kernel = wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_26,
+            .inputs = { sid_56_let },
+            .outputs = { sid_57_let },
+            .input_count = 1,
+            .output_count = 1,
+            .config = { .device_type = 0, .priority = 0 },
+            .id = 50
+        },
+        { // [51] tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_27
+            .kernel = wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_27,
+            .inputs = { sid_57_let },
+            .outputs = { sid_58_let },
+            .input_count = 1,
+            .output_count = 1,
+            .config = { .device_type = 0, .priority = 0 },
+            .id = 51
+        },
+        { // [52] tvmgen_default_fused_concatenate_6
+            .kernel = wrapped_tvmgen_default_fused_concatenate_6,
+            .inputs = { sid_55_let, sid_56_let, sid_56_let, sid_58_let },
+            .outputs = { sid_59_let },
+            .input_count = 4,
+            .output_count = 1,
+            .config = { .device_type = 0, .priority = 0 },
+            .id = 52
+        },
+        { // [53] tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_28
+            .kernel = wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_28,
+            .inputs = { sid_59_let },
+            .outputs = { sid_60_let },
+            .input_count = 1,
+            .output_count = 1,
+            .config = { .device_type = 0, .priority = 0 },
+            .id = 53
+        },
+        { // [54] tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_29
+            .kernel = wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_29,
+            .inputs = { sid_60_let },
+            .outputs = { sid_61_let },
+            .input_count = 1,
+            .output_count = 1,
+            .config = { .device_type = 0, .priority = 0 },
+            .id = 54
+        },
+        { // [55] tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_30
+            .kernel = wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_30,
+            .inputs = { sid_61_let },
+            .outputs = { sid_62_let },
+            .input_count = 1,
+            .output_count = 1,
+            .config = { .device_type = 0, .priority = 0 },
+            .id = 55
+        },
+        { // [56] tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add
+            .kernel = wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add,
+            .inputs = { sid_62_let },
+            .outputs = { sid_63_let },
+            .input_count = 1,
+            .output_count = 1,
+            .config = { .device_type = 0, .priority = 0 },
+            .id = 56
+        },
+        { // [57] tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_31
+            .kernel = wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_31,
+            .inputs = { sid_60_let },
+            .outputs = { sid_64_let },
+            .input_count = 1,
+            .output_count = 1,
+            .config = { .device_type = 0, .priority = 0 },
+            .id = 57
+        },
+        { // [58] tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_32
+            .kernel = wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_32,
+            .inputs = { sid_64_let },
+            .outputs = { sid_65_let },
+            .input_count = 1,
+            .output_count = 1,
+            .config = { .device_type = 0, .priority = 0 },
+            .id = 58
+        },
+        { // [59] tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_1
+            .kernel = wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_1,
+            .inputs = { sid_65_let },
+            .outputs = { sid_66_let },
+            .input_count = 1,
+            .output_count = 1,
+            .config = { .device_type = 0, .priority = 0 },
+            .id = 59
+        },
+        { // [60] tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_33
+            .kernel = wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_33,
+            .inputs = { sid_60_let },
+            .outputs = { sid_67_let },
+            .input_count = 1,
+            .output_count = 1,
+            .config = { .device_type = 0, .priority = 0 },
+            .id = 60
+        },
+        { // [61] tvmgen_default_fused_concatenate_7
+            .kernel = wrapped_tvmgen_default_fused_concatenate_7,
+            .inputs = { sid_67_let, sid_52_let },
+            .outputs = { sid_68_let },
+            .input_count = 2,
+            .output_count = 1,
+            .config = { .device_type = 0, .priority = 0 },
+            .id = 61
+        },
+        { // [62] tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_34
+            .kernel = wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_34,
+            .inputs = { sid_68_let },
+            .outputs = { sid_69_let },
+            .input_count = 1,
+            .output_count = 1,
+            .config = { .device_type = 0, .priority = 0 },
+            .id = 62
+        },
+        { // [63] tvmgen_default_fused_split_6
+            .kernel = wrapped_tvmgen_default_fused_split_6,
+            .inputs = { sid_69_let },
+            .outputs = { sid_70_let, sid_71_let },
+            .input_count = 1,
+            .output_count = 2,
+            .config = { .device_type = 0, .priority = 0 },
+            .id = 63
+        },
+        { // [64] tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_35
+            .kernel = wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_35,
+            .inputs = { sid_71_let },
+            .outputs = { sid_72_let },
+            .input_count = 1,
+            .output_count = 1,
+            .config = { .device_type = 0, .priority = 0 },
+            .id = 64
+        },
+        { // [65] tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_36
+            .kernel = wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_36,
+            .inputs = { sid_72_let },
+            .outputs = { sid_73_let },
+            .input_count = 1,
+            .output_count = 1,
+            .config = { .device_type = 0, .priority = 0 },
+            .id = 65
+        },
+        { // [66] tvmgen_default_fused_concatenate_8
+            .kernel = wrapped_tvmgen_default_fused_concatenate_8,
+            .inputs = { sid_70_let, sid_71_let, sid_71_let, sid_73_let },
+            .outputs = { sid_74_let },
+            .input_count = 4,
+            .output_count = 1,
+            .config = { .device_type = 0, .priority = 0 },
+            .id = 66
+        },
+        { // [67] tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_37
+            .kernel = wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_37,
+            .inputs = { sid_74_let },
+            .outputs = { sid_75_let },
+            .input_count = 1,
+            .output_count = 1,
+            .config = { .device_type = 0, .priority = 0 },
+            .id = 67
+        },
+        { // [68] tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_38
+            .kernel = wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_38,
+            .inputs = { sid_75_let },
+            .outputs = { sid_76_let },
+            .input_count = 1,
+            .output_count = 1,
+            .config = { .device_type = 0, .priority = 0 },
+            .id = 68
+        },
+        { // [69] tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_39
+            .kernel = wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_39,
+            .inputs = { sid_76_let },
+            .outputs = { sid_77_let },
+            .input_count = 1,
+            .output_count = 1,
+            .config = { .device_type = 0, .priority = 0 },
+            .id = 69
+        },
+        { // [70] tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_2
+            .kernel = wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_2,
+            .inputs = { sid_77_let },
+            .outputs = { sid_78_let },
+            .input_count = 1,
+            .output_count = 1,
+            .config = { .device_type = 0, .priority = 0 },
+            .id = 70
+        },
+        { // [71] tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_40
+            .kernel = wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_40,
+            .inputs = { sid_75_let },
+            .outputs = { sid_79_let },
+            .input_count = 1,
+            .output_count = 1,
+            .config = { .device_type = 0, .priority = 0 },
+            .id = 71
+        },
+        { // [72] tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_41
+            .kernel = wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_41,
+            .inputs = { sid_79_let },
+            .outputs = { sid_80_let },
+            .input_count = 1,
+            .output_count = 1,
+            .config = { .device_type = 0, .priority = 0 },
+            .id = 72
+        },
+        { // [73] tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_3
+            .kernel = wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_3,
+            .inputs = { sid_80_let },
+            .outputs = { sid_81_let },
+            .input_count = 1,
+            .output_count = 1,
+            .config = { .device_type = 0, .priority = 0 },
+            .id = 73
+        },
+        { // [74] tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_42
+            .kernel = wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_42,
+            .inputs = { sid_75_let },
+            .outputs = { sid_82_let },
+            .input_count = 1,
+            .output_count = 1,
+            .config = { .device_type = 0, .priority = 0 },
+            .id = 74
+        },
+        { // [75] tvmgen_default_fused_concatenate_9
+            .kernel = wrapped_tvmgen_default_fused_concatenate_9,
+            .inputs = { sid_82_let, sid_44_let },
+            .outputs = { sid_83_let },
+            .input_count = 2,
+            .output_count = 1,
+            .config = { .device_type = 0, .priority = 0 },
+            .id = 75
+        },
+        { // [76] tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_43
+            .kernel = wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_43,
+            .inputs = { sid_83_let },
+            .outputs = { sid_84_let },
+            .input_count = 1,
+            .output_count = 1,
+            .config = { .device_type = 0, .priority = 0 },
+            .id = 76
+        },
+        { // [77] tvmgen_default_fused_split_7
+            .kernel = wrapped_tvmgen_default_fused_split_7,
+            .inputs = { sid_84_let },
+            .outputs = { sid_85_let, sid_86_let },
+            .input_count = 1,
+            .output_count = 2,
+            .config = { .device_type = 0, .priority = 0 },
+            .id = 77
+        },
+        { // [78] tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_44
+            .kernel = wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_44,
+            .inputs = { sid_86_let },
+            .outputs = { sid_87_let },
+            .input_count = 1,
+            .output_count = 1,
+            .config = { .device_type = 0, .priority = 0 },
+            .id = 78
+        },
+        { // [79] tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_45
+            .kernel = wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_45,
+            .inputs = { sid_87_let },
+            .outputs = { sid_88_let },
+            .input_count = 1,
+            .output_count = 1,
+            .config = { .device_type = 0, .priority = 0 },
+            .id = 79
+        },
+        { // [80] tvmgen_default_fused_concatenate_10
+            .kernel = wrapped_tvmgen_default_fused_concatenate_10,
+            .inputs = { sid_85_let, sid_86_let, sid_86_let, sid_88_let },
+            .outputs = { sid_89_let },
+            .input_count = 4,
+            .output_count = 1,
+            .config = { .device_type = 0, .priority = 0 },
+            .id = 80
+        },
+        { // [81] tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_46
+            .kernel = wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_46,
+            .inputs = { sid_89_let },
+            .outputs = { sid_90_let },
+            .input_count = 1,
+            .output_count = 1,
+            .config = { .device_type = 0, .priority = 0 },
+            .id = 81
+        },
+        { // [82] tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_47
+            .kernel = wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_47,
+            .inputs = { sid_90_let },
+            .outputs = { sid_91_let },
+            .input_count = 1,
+            .output_count = 1,
+            .config = { .device_type = 0, .priority = 0 },
+            .id = 82
+        },
+        { // [83] tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_48
+            .kernel = wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_48,
+            .inputs = { sid_91_let },
+            .outputs = { sid_92_let },
+            .input_count = 1,
+            .output_count = 1,
+            .config = { .device_type = 0, .priority = 0 },
+            .id = 83
+        },
+        { // [84] tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_4
+            .kernel = wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_4,
+            .inputs = { sid_92_let },
+            .outputs = { sid_93_let },
+            .input_count = 1,
+            .output_count = 1,
+            .config = { .device_type = 0, .priority = 0 },
+            .id = 84
+        },
+        { // [85] tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_49
+            .kernel = wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_49,
+            .inputs = { sid_90_let },
+            .outputs = { sid_94_let },
+            .input_count = 1,
+            .output_count = 1,
+            .config = { .device_type = 0, .priority = 0 },
+            .id = 85
+        },
+        { // [86] tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_50
+            .kernel = wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_sigmoid_multiply_50,
+            .inputs = { sid_94_let },
+            .outputs = { sid_95_let },
+            .input_count = 1,
+            .output_count = 1,
+            .config = { .device_type = 0, .priority = 0 },
+            .id = 86
+        },
+        { // [87] tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_5
+            .kernel = wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc_add_5,
+            .inputs = { sid_95_let },
+            .outputs = { sid_96_let },
+            .input_count = 1,
+            .output_count = 1,
+            .config = { .device_type = 0, .priority = 0 },
+            .id = 87
+        },
+        { // [88] tvmgen_default_fused_concatenate_layout_transform_reshape_concatenate_layout_transform_reshape__7c5ad37d2665c07f_
+            .kernel = wrapped_tvmgen_default_fused_concatenate_layout_transform_reshape_concatenate_layout_transform_reshape__7c5ad37d2665c07f_,
+            .inputs = { sid_63_let, sid_66_let, sid_78_let, sid_81_let, sid_93_let, sid_96_let },
+            .outputs = { sid_97_let, sid_98_let },
+            .input_count = 6,
+            .output_count = 2,
+            .config = { .device_type = 0, .priority = 0 },
+            .id = 88
+        },
+        { // [89] tvmgen_default_fused_reshape_transpose
+            .kernel = wrapped_tvmgen_default_fused_reshape_transpose,
+            .inputs = { sid_97_let, sid_98_let },
+            .outputs = { sid_99_let },
+            .input_count = 2,
+            .output_count = 1,
+            .config = { .device_type = 0, .priority = 0 },
+            .id = 89
+        },
+        { // [90] tvmgen_default_fused_nn_softmax
+            .kernel = wrapped_tvmgen_default_fused_nn_softmax,
+            .inputs = { sid_99_let },
+            .outputs = { sid_100_let },
+            .input_count = 1,
+            .output_count = 1,
+            .config = { .device_type = 0, .priority = 0 },
+            .id = 90
+        },
+        { // [91] tvmgen_default_fused_transpose_layout_transform
+            .kernel = wrapped_tvmgen_default_fused_transpose_layout_transform,
+            .inputs = { sid_100_let },
+            .outputs = { sid_101_let },
+            .input_count = 1,
+            .output_count = 1,
+            .config = { .device_type = 0, .priority = 0 },
+            .id = 91
+        },
+        { // [92] tvmgen_default_fused_nn_contrib_conv2d_NCHWc
+            .kernel = wrapped_tvmgen_default_fused_nn_contrib_conv2d_NCHWc,
+            .inputs = { sid_101_let },
+            .outputs = { sid_102_let },
+            .input_count = 1,
+            .output_count = 1,
+            .config = { .device_type = 0, .priority = 0 },
+            .id = 92
+        },
+        { // [93] tvmgen_default_fused_layout_transform_reshape_strided_slice_subtract_strided_slice_add_add_divi_e52109f6a309057f_
+            .kernel = wrapped_tvmgen_default_fused_layout_transform_reshape_strided_slice_subtract_strided_slice_add_add_divi_e52109f6a309057f_,
+            .inputs = { sid_102_let, sid_97_let, sid_98_let },
+            .outputs = { output_buffer_var },
+            .input_count = 3,
+            .output_count = 1,
+            .config = { .device_type = 0, .priority = 0 },
+            .id = 93
+        },
+    };
 
-        int tvmrt_ret = tvmrt_run(cws, ws, op_args);
-    return tvmrt_ret;
+    // 运行 Scheduler-Worker 调度
+    return tvmrt_run(global_const_workspace_0_var, global_workspace_1_var, g_entities);
 }
 
+// ============ 兼容接口 ============
 
+struct tvmgen_default_inputs { void* images; };
+struct tvmgen_default_outputs { void* output; };
 
+#ifdef __cplusplus
+extern "C"
+#endif
+TVM_DLL int32_t tvmgen_default_run(
+    struct tvmgen_default_inputs* inputs,
+    struct tvmgen_default_outputs* outputs) {
+    return tvmgen_default___tvm_main__(
+        (float*)inputs->images,
+        (float*)outputs->output,
+        global_const_workspace,
+        global_workspace);
+}
